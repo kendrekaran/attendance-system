@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Attendance Register</title>
+    <link rel="preload" href="/fonts/public-sans.woff2" as="font" type="font/woff2" crossorigin>
+    <style>
+        @font-face {
+            font-family: "Public Sans";
+            src: url("/fonts/public-sans.woff2") format("woff2");
+            font-weight: 100 900;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        :root {
+            color-scheme: light;
+            --paper: oklch(97.6% 0.006 85);
+            --surface: oklch(99.4% 0.003 85);
+            --sunken: oklch(95.2% 0.008 85);
+            --line: oklch(89.5% 0.01 85);
+            --line-strong: oklch(81% 0.014 85);
+            --ink: oklch(24% 0.035 262);
+            --ink-2: oklch(42% 0.03 262);
+            --ink-3: oklch(50% 0.025 262);
+            --brand: oklch(36% 0.085 262);
+            --brand-hover: oklch(31% 0.09 262);
+            --brand-soft: oklch(94.5% 0.025 262);
+            --present: oklch(45% 0.11 155);
+            --present-soft: oklch(95% 0.04 155);
+            --absent: oklch(48% 0.15 28);
+            --absent-soft: oklch(95.5% 0.03 28);
+            --focus: oklch(55% 0.16 262);
+            --radius: 10px;
+            --radius-sm: 7px;
+            --shadow: 0 1px 2px oklch(24% 0.035 262 / 0.06), 0 4px 14px oklch(24% 0.035 262 / 0.05);
+            --shadow-pop: 0 2px 6px oklch(24% 0.035 262 / 0.1), 0 14px 34px oklch(24% 0.035 262 / 0.14);
+            font-family: "Public Sans", system-ui, sans-serif;
+            font-size: 15px;
+            line-height: 1.5;
+            color: var(--ink);
+            background: var(--paper);
+            accent-color: var(--brand);
+            caret-color: var(--brand);
+        }
+
+        * { box-sizing: border-box; }
+        ::selection { background: oklch(86% 0.06 262); color: var(--ink); }
+        body { margin: 0; min-height: 100vh; }
+        button, input { font: inherit; color: inherit; }
+        :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+        [hidden] { display: none !important; }
+
+        .shell { max-width: 1240px; margin: 0 auto; padding: 0 28px 48px; }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            padding: 22px 0 20px;
+            border-bottom: 1px solid var(--line);
+        }
+        .brand { display: flex; align-items: center; gap: 12px; margin-right: auto; }
+        .brand-mark {
+            display: grid;
+            place-items: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 9px;
+            background: var(--brand);
+            color: var(--surface);
+        }
+        .brand h1 { margin: 0; font-size: 1.2rem; font-weight: 700; letter-spacing: -0.015em; line-height: 1.2; }
+        .brand p { margin: 0; color: var(--ink-3); font-size: 0.84rem; }
+
+        .date-control { display: flex; align-items: center; gap: 10px; }
+        .date-control > label { font-size: 0.8rem; font-weight: 600; color: var(--ink-2); }
+        .stepper {
+            display: flex;
+            align-items: stretch;
+            border: 1px solid var(--line-strong);
+            border-radius: var(--radius-sm);
+            background: var(--surface);
+            overflow: hidden;
+        }
+        .stepper input {
+            width: 8.6em;
+            border: 0;
+            padding: 7px 4px;
+            text-align: center;
+            font-variant-numeric: tabular-nums;
+            background: transparent;
+        }
+        .stepper input:focus-visible { outline: none; }
+        .stepper:focus-within { box-shadow: 0 0 0 2px var(--focus); border-color: transparent; }
+        .stepper input[aria-invalid="true"] { color: var(--absent); }
+        .icon-btn {
+            display: grid;
+            place-items: center;
+            width: 34px;
+            border: 0;
+            background: transparent;
+            color: var(--ink-2);
+            cursor: pointer;
+        }
+        .icon-btn:hover { background: var(--sunken); color: var(--ink); }
+        .link-btn {
+            border: 0;
+            background: none;
+            padding: 4px 2px;
+            color: var(--brand);
+            font-weight: 600;
+            font-size: 0.86rem;
+            cursor: pointer;
+            text-underline-offset: 3px;
+        }
+        .link-btn:hover { text-decoration: underline; }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 38px;
+            padding: 0 15px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--line-strong);
+            background: var(--surface);
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background-color 120ms ease-out, border-color 120ms ease-out;
+            white-space: nowrap;
+        }
+        .btn:hover { background: var(--sunken); }
+        .btn svg { flex: none; }
+        .btn-primary { background: var(--brand); border-color: var(--brand); color: var(--surface); }
+        .btn-primary:hover { background: var(--brand-hover); border-color: var(--brand-hover); }
+        .btn-present { background: var(--present); border-color: var(--present); color: var(--surface); }
+        .btn-present:hover { background: oklch(40% 0.11 155); }
+        .btn-absent { background: var(--surface); border-color: oklch(78% 0.08 28); color: var(--absent); }
+        .btn-absent:hover { background: var(--absent-soft); }
+        .btn:disabled, .btn[aria-busy="true"] { opacity: 0.5; cursor: not-allowed; }
+        .topbar-actions { display: flex; gap: 8px; }
+
+        .banner {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            margin-top: 20px;
+            padding: 14px 16px;
+            border-radius: var(--radius);
+            border: 1px solid oklch(84% 0.06 28);
+            background: var(--absent-soft);
+            color: oklch(32% 0.1 28);
+        }
+        .banner svg { flex: none; margin-top: 2px; color: var(--absent); }
+        .banner-text { margin-right: auto; }
+        .banner strong { display: block; color: oklch(30% 0.11 28); }
+        .banner span { font-size: 0.88rem; }
+        .banner code { font-size: 0.85em; }
+
+        .workspace {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 320px;
+            gap: 28px;
+            align-items: start;
+            padding-top: 24px;
+        }
+        .workspace > *, .field, .field-row > * { min-width: 0; }
+
+        .toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+        }
+        .tabs {
+            display: inline-flex;
+            flex-wrap: wrap;
+            padding: 3px;
+            gap: 2px;
+            border-radius: 9px;
+            background: var(--sunken);
+            border: 1px solid var(--line);
+        }
+        .tab {
+            min-width: 54px;
+            padding: 6px 14px;
+            border: 0;
+            border-radius: 6px;
+            background: transparent;
+            color: var(--ink-2);
+            font-weight: 600;
+            font-size: 0.86rem;
+            cursor: pointer;
+        }
+        .tab:hover { color: var(--ink); }
+        .tab[aria-selected="true"] {
+            background: var(--surface);
+            color: var(--ink);
+            box-shadow: 0 1px 2px oklch(24% 0.035 262 / 0.1), 0 1px 6px oklch(24% 0.035 262 / 0.06);
+        }
+        .tab .count { margin-left: 6px; color: var(--ink-3); font-weight: 500; font-variant-numeric: tabular-nums; }
+        .summary { margin: 0; color: var(--ink-2); font-size: 0.88rem; font-variant-numeric: tabular-nums; }
+        .summary strong { color: var(--ink); font-weight: 650; }
+
+        .register {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+        .table-scroll { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+        caption { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+        thead th {
+            padding: 11px 16px;
+            background: var(--sunken);
+            border-bottom: 1px solid var(--line);
+            color: var(--ink-2);
+            font-size: 0.76rem;
+            font-weight: 650;
+            letter-spacing: 0.02em;
+            text-align: left;
+            white-space: nowrap;
+        }
+        tbody td {
+            padding: 13px 16px;
+            border-bottom: 1px solid var(--line);
+            white-space: nowrap;
+        }
+        tbody tr:last-child td { border-bottom: 0; }
+        tbody tr { cursor: pointer; transition: background-color 100ms ease-out; }
+        tbody tr:hover { background: oklch(97.8% 0.008 262); }
+        tbody tr[aria-selected="true"] { background: var(--brand-soft); box-shadow: inset 2px 0 0 var(--brand); }
+        tbody tr:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+        .num { text-align: right; }
+        .roll { color: var(--ink-2); font-weight: 600; }
+        .name { font-weight: 600; }
+        .division {
+            display: inline-block;
+            min-width: 28px;
+            padding: 1px 8px;
+            border-radius: 999px;
+            background: var(--sunken);
+            border: 1px solid var(--line);
+            color: var(--ink-2);
+            font-size: 0.8rem;
+            font-weight: 650;
+            text-align: center;
+        }
+        .pct { display: inline-flex; align-items: center; justify-content: flex-end; gap: 10px; min-width: 132px; }
+        .pct-bar { width: 64px; height: 6px; border-radius: 999px; background: var(--sunken); overflow: hidden; }
+        .pct-bar span { display: block; height: 100%; border-radius: inherit; background: var(--brand); }
+        .pct-value { min-width: 3.4em; font-weight: 650; }
+        .pct-none { color: var(--ink-3); font-weight: 500; }
+        .day {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 2px 9px;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 650;
+        }
+        .day.present { background: var(--present-soft); color: var(--present); }
+        .day.absent { background: var(--absent-soft); color: var(--absent); }
+        .day.unmarked { color: var(--ink-3); font-weight: 500; padding-left: 0; }
+        .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+
+        .empty { padding: 48px 24px; text-align: center; color: var(--ink-2); }
+        .empty strong { display: block; margin-bottom: 4px; color: var(--ink); font-size: 1rem; }
+
+        .selection {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 16px;
+            border-top: 1px solid var(--line);
+            background: var(--surface);
+            flex-wrap: wrap;
+        }
+        .selection-text { margin-right: auto; min-width: 0; }
+        .selection-text strong { display: block; font-weight: 650; }
+        .selection-text span { color: var(--ink-2); font-size: 0.86rem; }
+        .selection[data-empty="true"] .selection-text strong { color: var(--ink-2); font-weight: 500; }
+
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 20px;
+        }
+        .panel h2 { margin: 0 0 4px; font-size: 1rem; font-weight: 700; letter-spacing: -0.01em; }
+        .panel > p { margin: 0 0 18px; color: var(--ink-2); font-size: 0.86rem; }
+        .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+        .field label { font-size: 0.82rem; font-weight: 650; color: var(--ink-2); }
+        .field input {
+            width: 100%;
+            min-width: 0;
+            min-height: 40px;
+            padding: 8px 11px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--line-strong);
+            background: var(--surface);
+            transition: border-color 120ms ease-out, box-shadow 120ms ease-out;
+        }
+        .field input::placeholder { color: var(--ink-3); }
+        .field input:hover { border-color: oklch(72% 0.02 262); }
+        .field input:focus-visible { outline: none; border-color: var(--focus); box-shadow: 0 0 0 3px oklch(55% 0.16 262 / 0.18); }
+        .field input[aria-invalid="true"] { border-color: var(--absent); }
+        .field-error { margin: 0; color: var(--absent); font-size: 0.8rem; font-weight: 600; }
+        .field-error:empty { display: none; }
+        .field-row { display: grid; grid-template-columns: 1fr 96px; gap: 12px; }
+        .panel .btn-primary { width: 100%; margin-top: 4px; }
+        .panel-foot {
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid var(--line);
+            color: var(--ink-3);
+            font-size: 0.8rem;
+        }
+        .panel-foot p { margin: 0 0 8px; }
+        .panel-foot p:last-child { margin: 0; }
+
+        .toast {
+            position: fixed;
+            left: 50%;
+            bottom: 26px;
+            max-width: min(92vw, 460px);
+            padding: 11px 16px;
+            border-radius: 9px;
+            background: var(--ink);
+            color: var(--surface);
+            font-size: 0.9rem;
+            font-weight: 550;
+            box-shadow: var(--shadow-pop);
+            transform: translate(-50%, 0);
+            opacity: 1;
+            transition: opacity 180ms cubic-bezier(0.16, 1, 0.3, 1), transform 260ms cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .toast.is-hidden { opacity: 0; transform: translate(-50%, 12px); pointer-events: none; }
+        .toast.warn { background: oklch(38% 0.12 28); }
+
+        @media (max-width: 960px) {
+            .workspace { grid-template-columns: 1fr; }
+            .panel { order: -1; }
+        }
+        @media (max-width: 640px) {
+            .shell { padding: 0 16px 40px; }
+            .topbar { flex-wrap: wrap; gap: 14px; }
+            .brand { width: 100%; }
+            .date-control { flex-wrap: wrap; }
+            .selection .btn { flex: 1; }
+            .selection-text { flex-basis: 100%; }
+            .field-row { grid-template-columns: 1fr 88px; }
+            .pct-bar { display: none; }
+            .pct { min-width: 0; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            * { transition: none !important; }
+        }
+    </style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+        <symbol id="i-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/><path d="M9 8h7"/></symbol>
+        <symbol id="i-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></symbol>
+        <symbol id="i-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></symbol>
+        <symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></symbol>
+        <symbol id="i-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 0 0-14.3-4.9L4 8"/><path d="M4 4v4h4"/><path d="M4 13a8 8 0 0 0 14.3 4.9L20 16"/><path d="M20 20v-4h-4"/></symbol>
+        <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+        <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12"/><path d="M18 6 6 18"/></symbol>
+        <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></symbol>
+        <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20z"/><path d="M12 10v4"/><path d="M12 17.2v.1"/></symbol>
+    </defs>
+</svg>
+
+<div class="shell">
+    <header class="topbar">
+        <div class="brand">
+            <span class="brand-mark"><svg width="20" height="20" aria-hidden="true"><use href="#i-book"/></svg></span>
+            <div>
+                <h1>Attendance Register</h1>
+                <p>Mark daily attendance and track each student's record.</p>
+            </div>
+        </div>
+        <div class="date-control">
+            <label for="date">Class date</label>
+            <div class="stepper">
+                <button type="button" class="icon-btn" id="prev-day" aria-label="Previous day"><svg width="18" height="18" aria-hidden="true"><use href="#i-left"/></svg></button>
+                <input id="date" inputmode="numeric" spellcheck="false" autocomplete="off" placeholder="yyyy-MM-dd" title="Date as yyyy-MM-dd">
+                <button type="button" class="icon-btn" id="next-day" aria-label="Next day"><svg width="18" height="18" aria-hidden="true"><use href="#i-right"/></svg></button>
+            </div>
+            <button type="button" class="link-btn" id="today">Today</button>
+        </div>
+        <div class="topbar-actions">
+            <button type="button" class="btn" id="refresh"><svg width="17" height="17" aria-hidden="true"><use href="#i-refresh"/></svg>Refresh</button>
+            <button type="button" class="btn" id="export"><svg width="17" height="17" aria-hidden="true"><use href="#i-download"/></svg>Export Excel</button>
+        </div>
+    </header>
+
+    <div class="banner" id="db-banner" role="alert" hidden>
+        <svg width="20" height="20" aria-hidden="true"><use href="#i-alert"/></svg>
+        <div class="banner-text">
+            <strong id="db-banner-title">MySQL is not reachable</strong>
+            <span id="db-banner-detail"></span>
+        </div>
+        <button type="button" class="btn" id="retry">Retry</button>
+    </div>
+
+    <div class="workspace">
+        <main>
+            <div class="toolbar">
+                <div class="tabs" role="tablist" aria-label="Division filter" id="filter"></div>
+                <p class="summary" id="summary"></p>
+            </div>
+
+            <section class="register" aria-label="Students">
+                <div class="table-scroll">
+                    <table>
+                        <caption>Students and attendance</caption>
+                        <thead>
+                        <tr>
+                            <th scope="col">Roll</th>
+                            <th scope="col">Name</th>
+                            <th scope="col">Division</th>
+                            <th scope="col" id="day-heading">On date</th>
+                            <th scope="col" class="num">Present</th>
+                            <th scope="col" class="num">Absent</th>
+                            <th scope="col" class="num">Percentage</th>
+                        </tr>
+                        </thead>
+                        <tbody id="rows"></tbody>
+                    </table>
+                </div>
+                <div class="empty" id="empty" hidden>
+                    <strong id="empty-title">No students in this division</strong>
+                    <span id="empty-detail">Add a student with the form, or choose All.</span>
+                </div>
+                <div class="selection" id="selection" data-empty="true">
+                    <div class="selection-text">
+                        <strong id="selection-name">Select a student to mark attendance</strong>
+                        <span id="selection-detail">Click a row, or use the arrow keys.</span>
+                    </div>
+                    <button type="button" class="btn btn-absent" id="absent" disabled><svg width="17" height="17" aria-hidden="true"><use href="#i-x"/></svg>Mark Absent</button>
+                    <button type="button" class="btn btn-present" id="present" disabled><svg width="17" height="17" aria-hidden="true"><use href="#i-check"/></svg>Mark Present</button>
+                </div>
+            </section>
+        </main>
+
+        <aside class="panel" aria-labelledby="add-heading">
+            <h2 id="add-heading">Add student</h2>
+            <p>New students start with no marked days.</p>
+            <form id="add-form" novalidate>
+                <div class="field">
+                    <label for="name">Full name</label>
+                    <input id="name" name="name" autocomplete="off" placeholder="e.g. Meera Iyer" aria-describedby="name-error">
+                    <p class="field-error" id="name-error"></p>
+                </div>
+                <div class="field-row">
+                    <div class="field">
+                        <label for="roll">Roll number</label>
+                        <input id="roll" name="roll" autocomplete="off" placeholder="e.g. 104" aria-describedby="roll-error">
+                        <p class="field-error" id="roll-error"></p>
+                    </div>
+                    <div class="field">
+                        <label for="division">Division</label>
+                        <input id="division" name="division" autocomplete="off" placeholder="A" aria-describedby="division-error">
+                        <p class="field-error" id="division-error"></p>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary" id="add"><svg width="17" height="17" aria-hidden="true"><use href="#i-plus"/></svg>Add student</button>
+            </form>
+            <div class="panel-foot">
+                <p>Percentage is present days out of marked days. A dash means no days are marked yet.</p>
+                <p>Export Excel downloads the rows in the current division filter.</p>
+            </div>
+        </aside>
+    </div>
+</div>
+
+<div class="toast is-hidden" id="message" role="status" aria-live="polite"></div>
+
+<script>
+    const HEADER = { "X-Requested-With": "attendance", "Content-Type": "application/x-www-form-urlencoded" };
+    const NO_MARKS = "\u2014";
+
+    const nameInput = document.getElementById("name");
+    const rollInput = document.getElementById("roll");
+    const divisionInput = document.getElementById("division");
+    const filterTabs = document.getElementById("filter");
+    const dateInput = document.getElementById("date");
+    const message = document.getElementById("message");
+    const rowsBody = document.getElementById("rows");
+    const summary = document.getElementById("summary");
+    const emptyState = document.getElementById("empty");
+    const banner = document.getElementById("db-banner");
+    const selectionBar = document.getElementById("selection");
+    const selectionName = document.getElementById("selection-name");
+    const selectionDetail = document.getElementById("selection-detail");
+    const presentButton = document.getElementById("present");
+    const absentButton = document.getElementById("absent");
+
+    let filter = "All";
+    let connected = false;
+    let visible = [];
+    let divisions = [];
+    let total = 0;
+    let selectedId = null;
+    let focusAfterRender = false;
+    let toastTimer = null;
+    let busy = false;
+
+    dateInput.value = today();
+    load();
+
+    document.getElementById("add-form").addEventListener("submit", async function (event) {
+        event.preventDefault();
+        clearFieldErrors();
+        const roll = rollInput.value.trim();
+        const reply = await post("/api/students", {
+            name: nameInput.value,
+            roll: rollInput.value,
+            division: divisionInput.value
+        }, document.getElementById("add"));
+        if (!reply) {
+            return;
+        }
+        if (!reply.ok) {
+            showFieldError(reply.body.error || "Could not add the student.");
+            return;
+        }
+        const added = nameInput.value.trim();
+        nameInput.value = "";
+        rollInput.value = "";
+        divisionInput.value = "";
+        filter = "All";
+        await load();
+        selectByRoll(roll);
+        show(reply.body.warning || added + " added.", reply.body.warning ? "warn" : "info");
+    });
+
+    filterTabs.addEventListener("keydown", function (event) {
+        if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") {
+            return;
+        }
+        const tabs = Array.from(filterTabs.querySelectorAll(".tab"));
+        const index = tabs.indexOf(document.activeElement);
+        if (index === -1) {
+            return;
+        }
+        event.preventDefault();
+        const next = event.key === "ArrowRight" ? (index + 1) % tabs.length : (index - 1 + tabs.length) % tabs.length;
+        tabs[next].focus();
+        tabs[next].click();
+    });
+
+    dateInput.addEventListener("change", function () {
+        if (validDate(dateInput.value.trim())) {
+            dateInput.removeAttribute("aria-invalid");
+            load();
+        } else {
+            dateInput.setAttribute("aria-invalid", "true");
+            show("Enter the date as yyyy-MM-dd.", "warn");
+        }
+    });
+    document.getElementById("prev-day").addEventListener("click", function () { shiftDay(-1); });
+    document.getElementById("next-day").addEventListener("click", function () { shiftDay(1); });
+    document.getElementById("today").addEventListener("click", function () {
+        dateInput.value = today();
+        dateInput.removeAttribute("aria-invalid");
+        load();
+    });
+
+    presentButton.addEventListener("click", function () { mark("PRESENT", presentButton); });
+    absentButton.addEventListener("click", function () { mark("ABSENT", absentButton); });
+    document.getElementById("export").addEventListener("click", exportExcel);
+    document.getElementById("refresh").addEventListener("click", async function () {
+        await load();
+        if (connected) {
+            show("List refreshed.", "info");
+        }
+    });
+    document.getElementById("retry").addEventListener("click", async function () {
+        await load();
+        if (connected) {
+            show("Connected to MySQL.", "info");
+        }
+    });
+
+    async function load() {
+        const date = dateInput.value.trim();
+        const query = new URLSearchParams({ division: filter });
+        if (validDate(date)) {
+            query.set("date", date);
+        }
+        let response;
+        let body;
+        try {
+            response = await fetch("/api/students?" + query.toString(), { cache: "no-store" });
+            body = await response.json();
+        } catch (error) {
+            setDisconnected("The attendance server is not running.", "Start it with mvn -q exec:java, then click Retry.");
+            return;
+        }
+        if (body.connected === false) {
+            setDisconnected(body.error, body.detail + " Start MySQL, load schema.sql, check db.properties, then click Retry.");
+            return;
+        }
+        if (!response.ok) {
+            show(body.error || "Could not load students.", "warn");
+            return;
+        }
+        connected = true;
+        banner.hidden = true;
+        filter = body.division;
+        divisions = body.divisions;
+        total = body.total;
+        visible = body.students;
+        if (!selectedStudent()) {
+            selectedId = null;
+        }
+        render(body.date);
+    }
+
+    function setDisconnected(title, detail) {
+        connected = false;
+        visible = [];
+        divisions = [];
+        total = 0;
+        selectedId = null;
+        document.getElementById("db-banner-title").textContent = title;
+        document.getElementById("db-banner-detail").textContent = detail;
+        banner.hidden = false;
+        render(null);
+    }
+
+    async function mark(status, button) {
+        const student = selectedStudent();
+        if (!student) {
+            show("Select a student in the table first.", "warn");
+            return;
+        }
+        const date = dateInput.value.trim();
+        if (!validDate(date)) {
+            dateInput.setAttribute("aria-invalid", "true");
+            show("Enter the date as yyyy-MM-dd.", "warn");
+            return;
+        }
+        const reply = await post("/api/attendance", { studentId: String(student.id), date: date, status: status }, button);
+        if (!reply) {
+            return;
+        }
+        if (!reply.ok) {
+            show(reply.body.error || "Could not save attendance.", "warn");
+            return;
+        }
+        await load();
+        selectedId = student.id;
+        render(date);
+        show(reply.body.warning || student.name + " marked " + status.toLowerCase() + " for " + longDate(date) + ".",
+            reply.body.warning ? "warn" : "info");
+    }
+
+    async function exportExcel() {
+        const button = document.getElementById("export");
+        if (busy) {
+            return;
+        }
+        busy = true;
+        button.setAttribute("aria-busy", "true");
+        try {
+            const response = await fetch("/export?" + new URLSearchParams({ division: filter }).toString(), { cache: "no-store" });
+            if (!response.ok) {
+                let body = {};
+                try {
+                    body = await response.json();
+                } catch (error) {
+                    /* Fall back to a generic message. */
+                }
+                if (body.connected === false) {
+                    setDisconnected(body.error, body.detail);
+                }
+                show(body.error || "Could not export.", "warn");
+                return;
+            }
+            const blob = await response.blob();
+            const disposition = response.headers.get("Content-Disposition") || "";
+            const match = /filename="([^"]+)"/.exec(disposition);
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = match ? match[1] : "attendance.xlsx";
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            setTimeout(function () { URL.revokeObjectURL(link.href); }, 1000);
+            show("Exported " + visible.length + (visible.length === 1 ? " row." : " rows."), "info");
+        } catch (error) {
+            show("The attendance server is not running.", "warn");
+        } finally {
+            busy = false;
+            button.removeAttribute("aria-busy");
+        }
+    }
+
+    async function post(url, fields, button) {
+        if (busy) {
+            return null;
+        }
+        busy = true;
+        if (button) {
+            button.setAttribute("aria-busy", "true");
+        }
+        try {
+            const response = await fetch(url, {
+                method: "POST",
+                headers: HEADER,
+                body: new URLSearchParams(fields).toString()
+            });
+            let body = {};
+            try {
+                body = await response.json();
+            } catch (error) {
+                /* Leave body empty. */
+            }
+            if (body.connected === false) {
+                setDisconnected(body.error, body.detail + " Start MySQL, load schema.sql, check db.properties, then click Retry.");
+                show(body.error, "warn");
+                return null;
+            }
+            return { ok: response.ok, body: body };
+        } catch (error) {
+            setDisconnected("The attendance server is not running.", "Start it with mvn -q exec:java, then click Retry.");
+            show("Nothing was saved.", "warn");
+            return null;
+        } finally {
+            busy = false;
+            if (button) {
+                button.removeAttribute("aria-busy");
+            }
+        }
+    }
+
+    function render(date) {
+        renderTabs();
+        document.getElementById("day-heading").textContent = date ? shortDate(date) : "On date";
+        rowsBody.replaceChildren();
+        for (let i = 0; i < visible.length; i++) {
+            rowsBody.appendChild(buildRow(visible[i], i));
+        }
+        emptyState.hidden = visible.length !== 0;
+        if (!connected) {
+            document.getElementById("empty-title").textContent = "Students are not available";
+            document.getElementById("empty-detail").textContent = "The list will load once MySQL is reachable.";
+        } else if (total === 0) {
+            document.getElementById("empty-title").textContent = "No students yet";
+            document.getElementById("empty-detail").textContent = "Add the first student with the form.";
+        } else {
+            document.getElementById("empty-title").textContent = "No students in this division";
+            document.getElementById("empty-detail").textContent = "Add a student with the form, or choose All.";
+        }
+        renderSummary(date);
+        renderSelection(date);
+        if (focusAfterRender) {
+            focusAfterRender = false;
+            const row = rowsBody.querySelector('tr[aria-selected="true"]');
+            if (row) {
+                row.focus();
+            }
+        }
+    }
+
+    function buildRow(student, index) {
+        const tr = document.createElement("tr");
+        tr.tabIndex = student.id === selectedId || (selectedId === null && index === 0) ? 0 : -1;
+        tr.setAttribute("aria-selected", student.id === selectedId ? "true" : "false");
+
+        addCell(tr, student.roll, "roll");
+        addCell(tr, student.name, "name");
+
+        const divisionCell = document.createElement("td");
+        const tag = document.createElement("span");
+        tag.className = "division";
+        tag.textContent = student.division;
+        divisionCell.appendChild(tag);
+        tr.appendChild(divisionCell);
+
+        const dayCell = document.createElement("td");
+        dayCell.appendChild(dayPill(student.dayStatus));
+        tr.appendChild(dayCell);
+
+        addCell(tr, String(student.present), "num");
+        addCell(tr, String(student.absent), "num");
+
+        const pctCell = document.createElement("td");
+        pctCell.className = "num";
+        const wrap = document.createElement("span");
+        wrap.className = "pct";
+        const value = document.createElement("span");
+        if (student.percent === NO_MARKS) {
+            value.className = "pct-value pct-none";
+            value.textContent = NO_MARKS;
+            value.title = "No marked days";
+        } else {
+            const bar = document.createElement("span");
+            bar.className = "pct-bar";
+            bar.setAttribute("aria-hidden", "true");
+            const fill = document.createElement("span");
+            fill.style.width = Math.max(0, Math.min(100, parseFloat(student.percent))) + "%";
+            bar.appendChild(fill);
+            wrap.appendChild(bar);
+            value.className = "pct-value";
+            value.textContent = student.percent + "%";
+        }
+        wrap.appendChild(value);
+        pctCell.appendChild(wrap);
+        tr.appendChild(pctCell);
+
+        tr.addEventListener("click", function () {
+            selectedId = student.id;
+            focusAfterRender = true;
+            render(currentDate());
+        });
+        tr.addEventListener("keydown", function (event) {
+            let next = null;
+            if (event.key === "Enter" || event.key === " ") {
+                next = index;
+            } else if (event.key === "ArrowDown") {
+                next = Math.min(visible.length - 1, index + 1);
+            } else if (event.key === "ArrowUp") {
+                next = Math.max(0, index - 1);
+            }
+            if (next === null) {
+                return;
+            }
+            event.preventDefault();
+            selectedId = visible[next].id;
+            focusAfterRender = true;
+            render(currentDate());
+        });
+        return tr;
+    }
+
+    function dayPill(status) {
+        const pill = document.createElement("span");
+        if (status === "PRESENT" || status === "ABSENT") {
+            pill.className = "day " + status.toLowerCase();
+            const dot = document.createElement("span");
+            dot.className = "dot";
+            pill.appendChild(dot);
+            pill.append(status === "PRESENT" ? "Present" : "Absent");
+        } else {
+            pill.className = "day unmarked";
+            pill.textContent = "Not marked";
+        }
+        return pill;
+    }
+
+    function renderTabs() {
+        const options = [{ name: "All", count: total }].concat(divisions);
+        filterTabs.replaceChildren();
+        for (let i = 0; i < options.length; i++) {
+            const option = options[i];
+            const tab = document.createElement("button");
+            tab.type = "button";
+            tab.className = "tab";
+            tab.setAttribute("role", "tab");
+            tab.dataset.division = option.name;
+            const selected = option.name === filter;
+            tab.setAttribute("aria-selected", selected ? "true" : "false");
+            tab.tabIndex = selected ? 0 : -1;
+            tab.textContent = option.name === "All" ? "All" : "Division " + option.name;
+            const count = document.createElement("span");
+            count.className = "count";
+            count.textContent = String(option.count);
+            tab.appendChild(count);
+            tab.addEventListener("click", function () {
+                if (filter === option.name) {
+                    return;
+                }
+                filter = option.name;
+                load().then(function () {
+                    const active = filterTabs.querySelector('[aria-selected="true"]');
+                    if (active && document.activeElement === document.body) {
+                        active.focus();
+                    }
+                });
+            });
+            filterTabs.appendChild(tab);
+        }
+    }
+
+    function renderSummary(date) {
+        summary.replaceChildren();
+        if (!connected) {
+            summary.textContent = "Not connected";
+            return;
+        }
+        let marked = 0;
+        let present = 0;
+        for (let i = 0; i < visible.length; i++) {
+            if (visible[i].dayStatus) {
+                marked++;
+                if (visible[i].dayStatus === "PRESENT") {
+                    present++;
+                }
+            }
+        }
+        const strong = document.createElement("strong");
+        strong.textContent = visible.length === 1 ? "1 student" : visible.length + " students";
+        summary.appendChild(strong);
+        if (date) {
+            summary.append(" \u00b7 " + marked + " marked on " + shortDate(date) + " \u00b7 " + present + " present");
+        }
+    }
+
+    function renderSelection(date) {
+        const student = selectedStudent();
+        presentButton.disabled = !student;
+        absentButton.disabled = !student;
+        selectionBar.dataset.empty = student ? "false" : "true";
+        if (!student) {
+            selectionName.textContent = connected ? "Select a student to mark attendance" : "Marking is unavailable";
+            selectionDetail.textContent = connected ? "Click a row, or use the arrow keys." : "Reconnect to MySQL first.";
+            return;
+        }
+        selectionName.textContent = student.name + " \u00b7 Roll " + student.roll;
+        if (!date) {
+            selectionDetail.textContent = "Enter a valid date to mark attendance.";
+        } else if (student.dayStatus) {
+            selectionDetail.textContent = "Marked " + student.dayStatus.toLowerCase() + " on " + longDate(date) + ". Marking again updates that day.";
+        } else {
+            selectionDetail.textContent = "Not marked on " + longDate(date) + ".";
+        }
+    }
+
+    function clearFieldErrors() {
+        const fields = [nameInput, rollInput, divisionInput];
+        for (let i = 0; i < fields.length; i++) {
+            fields[i].removeAttribute("aria-invalid");
+            document.getElementById(fields[i].id + "-error").textContent = "";
+        }
+    }
+
+    function showFieldError(problem) {
+        let field = null;
+        if (problem.indexOf("Name") === 0) {
+            field = nameInput;
+        } else if (problem.indexOf("Roll") === 0 || problem.indexOf("That roll") === 0) {
+            field = rollInput;
+        } else if (problem.indexOf("Division") === 0) {
+            field = divisionInput;
+        }
+        if (!field) {
+            show(problem, "warn");
+            return;
+        }
+        field.setAttribute("aria-invalid", "true");
+        document.getElementById(field.id + "-error").textContent = problem;
+        field.focus();
+    }
+
+    function addCell(row, text, className) {
+        const cell = document.createElement("td");
+        cell.textContent = text;
+        if (className) {
+            cell.className = className;
+        }
+        row.appendChild(cell);
+    }
+
+    function selectedStudent() {
+        for (let i = 0; i < visible.length; i++) {
+            if (visible[i].id === selectedId) {
+                return visible[i];
+            }
+        }
+        return null;
+    }
+
+    function selectByRoll(roll) {
+        for (let i = 0; i < visible.length; i++) {
+            if (visible[i].roll === roll) {
+                selectedId = visible[i].id;
+                render(currentDate());
+                return;
+            }
+        }
+    }
+
+    function currentDate() {
+        const date = dateInput.value.trim();
+        return validDate(date) ? date : null;
+    }
+
+    function shiftDay(delta) {
+        const base = currentDate() || today();
+        const d = new Date(base + "T00:00:00");
+        d.setDate(d.getDate() + delta);
+        dateInput.value = isoDate(d);
+        dateInput.removeAttribute("aria-invalid");
+        load();
+    }
+
+    function validDate(text) {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+            return false;
+        }
+        const d = new Date(text + "T00:00:00");
+        return !Number.isNaN(d.getTime()) && isoDate(d) === text;
+    }
+
+    function shortDate(text) {
+        return new Date(text + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+    }
+
+    function longDate(text) {
+        return new Date(text + "T00:00:00").toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
+    }
+
+    function isoDate(d) {
+        return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    }
+
+    function today() {
+        return isoDate(new Date());
+    }
+
+    function show(text, kind) {
+        message.textContent = text;
+        message.className = "toast" + (kind === "warn" ? " warn" : "");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () {
+            message.classList.add("is-hidden");
+        }, 3600);
+    }
+</script>
+</body>
+</html>
