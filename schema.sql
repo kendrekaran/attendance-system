@@ -1,9 +1,9 @@
--- Attendance database for the desktop app.
+-- Attendance database for the attendance website.
 -- Load it with:  mysql -u root < schema.sql
 -- Running this script again drops the tables and recreates the sample rows.
 --
--- Database-side hook: students_uppercase_division runs BEFORE INSERT
--- and stores division as UPPER(TRIM(division)). Typing "a" is saved as "A".
+-- Database-side hooks: two triggers store division as UPPER(TRIM(division)),
+-- one when a student is added and one when a student is edited. Typing "a" is saved as "A".
 
 CREATE DATABASE IF NOT EXISTS attendance_db
     CHARACTER SET utf8mb4
@@ -23,6 +23,7 @@ CREATE TABLE students (
     UNIQUE KEY uq_students_roll (roll_number)
 ) ENGINE=InnoDB;
 
+-- One row per student per date. Deleting a student also deletes their rows here.
 CREATE TABLE attendance (
     id INT NOT NULL AUTO_INCREMENT,
     student_id INT NOT NULL,
@@ -32,43 +33,65 @@ CREATE TABLE attendance (
     UNIQUE KEY uq_attendance_student_date (student_id, attendance_date),
     CONSTRAINT fk_attendance_student
         FOREIGN KEY (student_id) REFERENCES students (id)
+        ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
--- One row is inserted or updated per student per date from the app.
--- This trigger is the database-side hook. NEW.division is the value being inserted.
+-- NEW.division is the value being saved.
 CREATE TRIGGER students_uppercase_division
 BEFORE INSERT ON students
 FOR EACH ROW
 SET NEW.division = UPPER(TRIM(NEW.division));
 
--- Divisions are written in lowercase on purpose so the trigger can uppercase them.
--- After loading:
---   101 Asha Rao  A  2 present, 1 absent  -> 66.7
---   102 Ben Cole  A  no marks             -> em dash
---   103 Esha Nair A  2 present, 0 absent  -> 100.0
---   201 Cara Diaz B  1 present, 0 absent  -> 100.0
---   202 Dev Shah  B  0 present, 1 absent  -> 0.0
+CREATE TRIGGER students_uppercase_division_on_update
+BEFORE UPDATE ON students
+FOR EACH ROW
+SET NEW.division = UPPER(TRIM(NEW.division));
+
+-- Sample class. Divisions are written in lowercase on purpose so the trigger uppercases them.
 INSERT INTO students (name, roll_number, division) VALUES
-    ('Asha Rao', '101', 'a'),
-    ('Ben Cole', '102', 'a'),
-    ('Esha Nair', '103', 'a'),
-    ('Cara Diaz', '201', 'b'),
-    ('Dev Shah', '202', 'b');
+    ('Aarav Sharma', '101', 'a'),
+    ('Ananya Iyer', '102', 'a'),
+    ('Rohan Deshmukh', '103', 'a'),
+    ('Priya Kulkarni', '104', 'a'),
+    ('Vivaan Patil', '105', 'a'),
+    ('Sneha Joshi', '106', 'a'),
+    ('Siddharth Rao', '201', 'b'),
+    ('Kavya Reddy', '202', 'b'),
+    ('Omkar Jadhav', '203', 'b'),
+    ('Riya Gupta', '204', 'b'),
+    ('Yash Thakur', '205', 'b'),
+    ('Tanvi Bhosale', '206', 'b');
 
+-- One week of attendance: everyone is marked present first...
 INSERT INTO attendance (student_id, attendance_date, status)
-SELECT id, '2026-11-03', 'PRESENT' FROM students WHERE roll_number = '101';
+SELECT id, '2026-11-02', 'PRESENT' FROM students;
 INSERT INTO attendance (student_id, attendance_date, status)
-SELECT id, '2026-11-04', 'PRESENT' FROM students WHERE roll_number = '101';
+SELECT id, '2026-11-03', 'PRESENT' FROM students;
 INSERT INTO attendance (student_id, attendance_date, status)
-SELECT id, '2026-11-05', 'ABSENT' FROM students WHERE roll_number = '101';
+SELECT id, '2026-11-04', 'PRESENT' FROM students;
+INSERT INTO attendance (student_id, attendance_date, status)
+SELECT id, '2026-11-05', 'PRESENT' FROM students;
+INSERT INTO attendance (student_id, attendance_date, status)
+SELECT id, '2026-11-06', 'PRESENT' FROM students;
 
-INSERT INTO attendance (student_id, attendance_date, status)
-SELECT id, '2026-11-03', 'PRESENT' FROM students WHERE roll_number = '103';
-INSERT INTO attendance (student_id, attendance_date, status)
-SELECT id, '2026-11-04', 'PRESENT' FROM students WHERE roll_number = '103';
+-- ...then these absences are filled in. After loading:
+--   103 Rohan Deshmukh  3 present, 2 absent  -> 60.0 (below 75%)
+--   203 Omkar Jadhav    3 present, 2 absent  -> 60.0 (below 75%)
+--   102 Ananya Iyer     4 present, 1 absent  -> 80.0
+--   205 Yash Thakur     4 present, 1 absent  -> 80.0
+--   everyone else       5 present, 0 absent  -> 100.0
+UPDATE attendance SET status = 'ABSENT'
+WHERE student_id = (SELECT id FROM students WHERE roll_number = '103')
+  AND attendance_date IN ('2026-11-03', '2026-11-05');
 
-INSERT INTO attendance (student_id, attendance_date, status)
-SELECT id, '2026-11-03', 'PRESENT' FROM students WHERE roll_number = '201';
+UPDATE attendance SET status = 'ABSENT'
+WHERE student_id = (SELECT id FROM students WHERE roll_number = '203')
+  AND attendance_date IN ('2026-11-02', '2026-11-06');
 
-INSERT INTO attendance (student_id, attendance_date, status)
-SELECT id, '2026-11-03', 'ABSENT' FROM students WHERE roll_number = '202';
+UPDATE attendance SET status = 'ABSENT'
+WHERE student_id = (SELECT id FROM students WHERE roll_number = '102')
+  AND attendance_date = '2026-11-04';
+
+UPDATE attendance SET status = 'ABSENT'
+WHERE student_id = (SELECT id FROM students WHERE roll_number = '205')
+  AND attendance_date = '2026-11-05';

@@ -26,7 +26,10 @@ import java.util.Map;
  *     <li>{@code GET /} the page</li>
  *     <li>{@code GET /api/students?division=All&date=yyyy-MM-dd} students for the filter</li>
  *     <li>{@code POST /api/students} add a student (name, roll, division)</li>
+ *     <li>{@code POST /api/students/update} edit a student (id, name, roll, division)</li>
+ *     <li>{@code POST /api/students/delete} delete a student and their marks (id)</li>
  *     <li>{@code POST /api/attendance} mark a day (studentId, date, status)</li>
+ *     <li>{@code POST /api/attendance/all} mark a whole class (date, marks = id:STATUS,id:STATUS)</li>
  *     <li>{@code GET /export?division=All} the filtered rows as an .xlsx download</li>
  * </ul>
  * Requests run one at a time, so the single JDBC connection is never shared between threads.
@@ -88,17 +91,21 @@ public class WebServer {
 
         if (path.equals("/") || path.equals("/index.html")) {
             requireGet(exchange, () -> sendResource(exchange, "web/index.html", "text/html; charset=utf-8"));
-        } else if (path.equals("/fonts/public-sans.woff2")) {
-            requireGet(exchange, () -> sendResource(exchange, "web/fonts/public-sans.woff2", "font/woff2"));
         } else if (path.equals("/api/students") && method.equals("GET")) {
             listStudents(exchange);
         } else if (path.equals("/api/students") && method.equals("POST")) {
             addStudent(exchange);
+        } else if (path.equals("/api/students/update") && method.equals("POST")) {
+            updateStudent(exchange);
+        } else if (path.equals("/api/students/delete") && method.equals("POST")) {
+            deleteStudent(exchange);
         } else if (path.equals("/api/attendance") && method.equals("POST")) {
             markAttendance(exchange);
+        } else if (path.equals("/api/attendance/all") && method.equals("POST")) {
+            markWholeClass(exchange);
         } else if (path.equals("/export")) {
             requireGet(exchange, () -> export(exchange));
-        } else if (path.equals("/api/students") || path.equals("/api/attendance")) {
+        } else if (path.startsWith("/api/students") || path.startsWith("/api/attendance")) {
             sendError(exchange, 405, "Method not allowed.");
         } else {
             sendError(exchange, 404, "Not found.");
@@ -205,6 +212,192 @@ public class WebServer {
             warning = ex.getMessage();
         }
         sendJson(exchange, 200, "{\"ok\":true,\"roll\":" + json(roll.trim())
+                + ",\"warning\":" + (warning == null ? "null" : json(warning)) + "}");
+    }
+
+    private void updateStudent(HttpExchange exchange) throws IOException {
+        Map<String, String> form = readForm(exchange);
+        if (form == null) {
+            return;
+        }
+        int id;
+        try {
+            id = Integer.parseInt(form.getOrDefault("id", "").trim());
+        } catch (NumberFormatException ex) {
+            sendError(exchange, 400, "Select a student first.");
+            return;
+        }
+        String name = form.getOrDefault("name", "");
+        String roll = form.getOrDefault("roll", "");
+        String division = form.getOrDefault("division", "");
+        try {
+            hooks.beforeUpdateStudent(name, roll, division);
+        } catch (IllegalArgumentException ex) {
+            sendError(exchange, 400, ex.getMessage());
+            return;
+        }
+        if (!ensureDatabase(exchange)) {
+            return;
+        }
+        try {
+            if (!database.updateStudent(id, name, roll, division)) {
+                sendError(exchange, 404, "That student no longer exists. Refresh the list.");
+                return;
+            }
+        } catch (SQLException ex) {
+            if (Database.isDuplicateKey(ex)) {
+                sendError(exchange, 409, "That roll number is already used.");
+            } else {
+                sendDatabaseDown(exchange, ex);
+            }
+            return;
+        }
+        String warning = null;
+        try {
+            hooks.afterUpdateStudent(name.trim(), roll.trim(), division.trim());
+        } catch (IllegalArgumentException ex) {
+            warning = ex.getMessage();
+        }
+        sendJson(exchange, 200, "{\"ok\":true,\"warning\":" + (warning == null ? "null" : json(warning)) + "}");
+    }
+
+    private void deleteStudent(HttpExchange exchange) throws IOException {
+        Map<String, String> form = readForm(exchange);
+        if (form == null) {
+            return;
+        }
+        int id;
+        try {
+            id = Integer.parseInt(form.getOrDefault("id", "").trim());
+        } catch (NumberFormatException ex) {
+            sendError(exchange, 400, "Select a student first.");
+            return;
+        }
+        if (!ensureDatabase(exchange)) {
+            return;
+        }
+        StudentRecord student;
+        try {
+            student = findStudent(id);
+        } catch (SQLException ex) {
+            sendDatabaseDown(exchange, ex);
+            return;
+        }
+        if (student == null) {
+            sendError(exchange, 404, "That student no longer exists. Refresh the list.");
+            return;
+        }
+        try {
+            hooks.beforeDeleteStudent(student.getName(), student.getRollNumber());
+        } catch (IllegalArgumentException ex) {
+            sendError(exchange, 400, ex.getMessage());
+            return;
+        }
+        try {
+            database.deleteStudent(id);
+        } catch (SQLException ex) {
+            sendDatabaseDown(exchange, ex);
+            return;
+        }
+        String warning = null;
+        try {
+            hooks.afterDeleteStudent(student.getName(), student.getRollNumber());
+        } catch (IllegalArgumentException ex) {
+            warning = ex.getMessage();
+        }
+        sendJson(exchange, 200, "{\"ok\":true,\"warning\":" + (warning == null ? "null" : json(warning)) + "}");
+    }
+
+    /**
+     * Saves the whole class for one date. {@code marks} looks like {@code 1:PRESENT,2:ABSENT}.
+     * Every mark is checked and every before hook runs first, so a problem saves nothing.
+     */
+    private void markWholeClass(HttpExchange exchange) throws IOException {
+        Map<String, String> form = readForm(exchange);
+        if (form == null) {
+            return;
+        }
+        LocalDate day;
+        try {
+            day = LocalDate.parse(form.getOrDefault("date", "").trim());
+        } catch (DateTimeParseException ex) {
+            sendError(exchange, 400, "Enter the date as yyyy-MM-dd.");
+            return;
+        }
+        String marks = form.getOrDefault("marks", "").trim();
+        if (marks.isEmpty()) {
+            sendError(exchange, 400, "Mark at least one student.");
+            return;
+        }
+        if (!ensureDatabase(exchange)) {
+            return;
+        }
+
+        List<StudentRecord> students = new ArrayList<>();
+        List<String> statuses = new ArrayList<>();
+        for (String pair : marks.split(",")) {
+            String[] parts = pair.split(":");
+            if (parts.length != 2) {
+                sendError(exchange, 400, "Could not read the marks.");
+                return;
+            }
+            int studentId;
+            try {
+                studentId = Integer.parseInt(parts[0].trim());
+            } catch (NumberFormatException ex) {
+                sendError(exchange, 400, "Could not read the marks.");
+                return;
+            }
+            String status = parts[1].trim();
+            if (!status.equals(Database.PRESENT) && !status.equals(Database.ABSENT)) {
+                sendError(exchange, 400, "Status must be PRESENT or ABSENT.");
+                return;
+            }
+            StudentRecord student;
+            try {
+                student = findStudent(studentId);
+            } catch (SQLException ex) {
+                sendDatabaseDown(exchange, ex);
+                return;
+            }
+            if (student == null) {
+                sendError(exchange, 404, "A student in the list no longer exists. Refresh the page.");
+                return;
+            }
+            students.add(student);
+            statuses.add(status);
+        }
+
+        try {
+            for (int i = 0; i < students.size(); i++) {
+                hooks.beforeMarkAttendance(students.get(i).getRollNumber(), day.toString(), statuses.get(i));
+            }
+        } catch (IllegalArgumentException ex) {
+            sendError(exchange, 400, ex.getMessage() + " Nothing was saved.");
+            return;
+        }
+
+        int present = 0;
+        String warning = null;
+        for (int i = 0; i < students.size(); i++) {
+            try {
+                database.markAttendance(students.get(i).getId(), day, statuses.get(i));
+            } catch (SQLException ex) {
+                sendDatabaseDown(exchange, ex);
+                return;
+            }
+            try {
+                hooks.afterMarkAttendance(students.get(i).getRollNumber(), day.toString(), statuses.get(i));
+            } catch (IllegalArgumentException ex) {
+                warning = ex.getMessage();
+            }
+            if (statuses.get(i).equals(Database.PRESENT)) {
+                present++;
+            }
+        }
+        sendJson(exchange, 200, "{\"ok\":true,\"saved\":" + students.size()
+                + ",\"present\":" + present
+                + ",\"absent\":" + (students.size() - present)
                 + ",\"warning\":" + (warning == null ? "null" : json(warning)) + "}");
     }
 

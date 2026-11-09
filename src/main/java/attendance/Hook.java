@@ -14,6 +14,18 @@ public interface Hook {
     default void afterAddStudent(String name, String rollNumber, String division) {
     }
 
+    default void beforeUpdateStudent(String name, String rollNumber, String division) {
+    }
+
+    default void afterUpdateStudent(String name, String rollNumber, String division) {
+    }
+
+    default void beforeDeleteStudent(String name, String rollNumber) {
+    }
+
+    default void afterDeleteStudent(String name, String rollNumber) {
+    }
+
     default void beforeMarkAttendance(String rollNumber, String date, String status) {
     }
 

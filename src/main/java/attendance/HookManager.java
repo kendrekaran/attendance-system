@@ -27,6 +27,30 @@ public class HookManager {
         }
     }
 
+    public void beforeUpdateStudent(String name, String rollNumber, String division) {
+        for (Hook hook : hooks) {
+            hook.beforeUpdateStudent(name, rollNumber, division);
+        }
+    }
+
+    public void afterUpdateStudent(String name, String rollNumber, String division) {
+        for (Hook hook : hooks) {
+            hook.afterUpdateStudent(name, rollNumber, division);
+        }
+    }
+
+    public void beforeDeleteStudent(String name, String rollNumber) {
+        for (Hook hook : hooks) {
+            hook.beforeDeleteStudent(name, rollNumber);
+        }
+    }
+
+    public void afterDeleteStudent(String name, String rollNumber) {
+        for (Hook hook : hooks) {
+            hook.afterDeleteStudent(name, rollNumber);
+        }
+    }
+
     public void beforeMarkAttendance(String rollNumber, String date, String status) {
         for (Hook hook : hooks) {
             hook.beforeMarkAttendance(rollNumber, date, status);

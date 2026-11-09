@@ -36,6 +36,14 @@ class ValidationHookTest {
     }
 
     @Test
+    void checksEditsTheSameWayAsAdds() {
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> hook.beforeUpdateStudent("Asha", "", "A"));
+        assertEquals("Roll number cannot be blank.", ex.getMessage());
+        assertDoesNotThrow(() -> hook.beforeUpdateStudent("Asha", "101", "A"));
+    }
+
+    @Test
     void doesNotBlockMarkingOrExport() {
         assertDoesNotThrow(() -> hook.beforeMarkAttendance("", "", ""));
         assertDoesNotThrow(() -> hook.beforeExport(0));

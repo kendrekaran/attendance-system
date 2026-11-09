@@ -15,8 +15,9 @@ public class Main {
 
     public static void main(String[] args) {
         HookManager hooks = new HookManager();
-        // Validation is first, so a blank form stops before AuditHook writes a line.
+        // Checks are first, so a blank form or a future date stops before AuditHook writes a line.
         hooks.register(new ValidationHook());
+        hooks.register(new FutureDateHook());
         hooks.register(new AuditHook());
 
         int port = DEFAULT_PORT;

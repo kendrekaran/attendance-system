@@ -119,6 +119,30 @@ public class Database {
         }
     }
 
+    /** Changes a student's name, roll number, and division. Returns false if the id is not found. */
+    public boolean updateStudent(int id, String name, String rollNumber, String division) throws SQLException {
+        String sql = "UPDATE students SET name = ?, roll_number = ?, division = ? WHERE id = ?";
+        try (PreparedStatement statement = connection().prepareStatement(sql)) {
+            statement.setString(1, safeTrim(name));
+            statement.setString(2, safeTrim(rollNumber));
+            statement.setString(3, safeTrim(division));
+            statement.setInt(4, id);
+            return statement.executeUpdate() > 0;
+        }
+    }
+
+    /** Deletes a student. Their attendance rows are deleted first. */
+    public void deleteStudent(int id) throws SQLException {
+        try (PreparedStatement marks = connection().prepareStatement("DELETE FROM attendance WHERE student_id = ?")) {
+            marks.setInt(1, id);
+            marks.executeUpdate();
+        }
+        try (PreparedStatement student = connection().prepareStatement("DELETE FROM students WHERE id = ?")) {
+            student.setInt(1, id);
+            student.executeUpdate();
+        }
+    }
+
     public List<String> listDivisions() throws SQLException {
         String sql = "SELECT DISTINCT division FROM students ORDER BY division";
         List<String> divisions = new ArrayList<>();

@@ -45,6 +45,28 @@ public class AuditHook implements Hook {
     }
 
     @Override
+    public void beforeUpdateStudent(String name, String rollNumber, String division) {
+        write("beforeUpdateStudent",
+                "name=" + oneLine(name) + " roll=" + oneLine(rollNumber) + " division=" + oneLine(division));
+    }
+
+    @Override
+    public void afterUpdateStudent(String name, String rollNumber, String division) {
+        write("afterUpdateStudent",
+                "name=" + oneLine(name) + " roll=" + oneLine(rollNumber) + " division=" + oneLine(division));
+    }
+
+    @Override
+    public void beforeDeleteStudent(String name, String rollNumber) {
+        write("beforeDeleteStudent", "name=" + oneLine(name) + " roll=" + oneLine(rollNumber));
+    }
+
+    @Override
+    public void afterDeleteStudent(String name, String rollNumber) {
+        write("afterDeleteStudent", "name=" + oneLine(name) + " roll=" + oneLine(rollNumber));
+    }
+
+    @Override
     public void beforeMarkAttendance(String rollNumber, String date, String status) {
         write("beforeMarkAttendance",
                 "roll=" + oneLine(rollNumber) + " date=" + oneLine(date) + " status=" + oneLine(status));

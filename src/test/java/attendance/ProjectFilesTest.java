@@ -16,8 +16,10 @@ class ProjectFilesTest {
         assertTrue(sql.contains("CREATE TABLE students"));
         assertTrue(sql.contains("CREATE TABLE attendance"));
         assertTrue(sql.contains("BEFORE INSERT ON students"));
+        assertTrue(sql.contains("BEFORE UPDATE ON students"));
         assertTrue(sql.contains("SET NEW.division = UPPER(TRIM(NEW.division))"));
-        assertEquals(1, countOf(sql, "CREATE TRIGGER"));
+        assertTrue(sql.contains("ON DELETE CASCADE"));
+        assertEquals(2, countOf(sql, "CREATE TRIGGER"));
         assertTrue(sql.contains("INSERT INTO students"));
         assertTrue(sql.contains("INSERT INTO attendance"));
         assertTrue(sql.contains("'a'"));
