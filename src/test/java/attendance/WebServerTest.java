@@ -27,6 +27,8 @@ class WebServerTest {
     private final HttpClient client = HttpClient.newHttpClient();
     private WebServer server;
     private String base;
+    /** Sent with every request, so tests act as a logged-in teacher. Set to null to test the login. */
+    private String cookie;
 
     @AfterEach
     void stop() {
@@ -36,21 +38,159 @@ class WebServerTest {
     }
 
     @Test
-    void servesThePageAndFont() throws Exception {
+    void servesThePage() throws Exception {
         start(new MemoryDatabase(), new HookManager());
         HttpResponse<String> page = get("/");
         assertEquals(200, page.statusCode());
         assertTrue(page.headers().firstValue("Content-Type").orElse("").startsWith("text/html"));
-        assertTrue(page.body().contains("Attendance Register"));
-        assertTrue(page.body().contains("Export Excel"));
+        assertTrue(page.body().contains("Student Attendance System"));
+        assertTrue(page.body().contains("Mark Attendance"));
+        assertTrue(page.body().contains("Export to Excel"));
+        assertTrue(page.body().contains("Teacher Login"));
 
-        HttpResponse<byte[]> font = client.send(request("/fonts/public-sans.woff2").build(),
-                HttpResponse.BodyHandlers.ofByteArray());
-        assertEquals(200, font.statusCode());
-        assertTrue(font.body().length > 1000);
-
-        assertEquals(404, get("/fonts/../db.properties").statusCode());
+        assertEquals(404, get("/../db.properties").statusCode());
         assertEquals(404, get("/nope").statusCode());
+    }
+
+    @Test
+    void loginChecksThePasswordAndLogoutEndsTheSession() throws Exception {
+        MemoryDatabase database = new MemoryDatabase();
+        database.add("Asha Rao", "101", "A");
+        start(database, new HookManager());
+        cookie = null;
+
+        HttpResponse<String> notLoggedIn = get("/api/students");
+        assertEquals(401, notLoggedIn.statusCode());
+        assertTrue(notLoggedIn.body().contains("\"loggedIn\":false"));
+        assertEquals(401, get("/export").statusCode());
+        assertEquals(401, post("/api/students", "name=X&roll=1&division=A").statusCode());
+        assertEquals(1, database.students.size());
+
+        HttpResponse<String> wrong = post("/api/login", "username=admin&password=nope");
+        assertEquals(401, wrong.statusCode());
+        assertTrue(wrong.body().contains("Wrong username or password."));
+        assertEquals(400, post("/api/login", "username=admin&password=").statusCode());
+
+        HttpResponse<String> right = post("/api/login", "username=admin&password=admin123");
+        assertEquals(200, right.statusCode());
+        String setCookie = right.headers().firstValue("Set-Cookie").orElse("");
+        assertTrue(setCookie.contains("HttpOnly"));
+        cookie = setCookie.split(";")[0];
+
+        assertEquals(200, get("/api/students").statusCode());
+        assertTrue(get("/api/me").body().contains("\"username\":\"admin\""));
+
+        assertEquals(200, post("/api/logout", "").statusCode());
+        assertEquals(401, get("/api/students").statusCode());
+    }
+
+    @Test
+    void historyListsEveryMarkedDayOfOneStudent() throws Exception {
+        MemoryDatabase database = new MemoryDatabase();
+        database.add("Asha Rao", "101", "A");
+        database.add("Ben Cole", "102", "A");
+        database.markAttendance(1, LocalDate.of(2026, 11, 4), "ABSENT");
+        database.markAttendance(1, LocalDate.of(2026, 11, 3), "PRESENT");
+        database.markAttendance(2, LocalDate.of(2026, 11, 3), "PRESENT");
+        start(database, new HookManager());
+
+        String history = get("/api/history?id=1").body();
+        assertTrue(history.contains("\"name\":\"Asha Rao\",\"roll\":\"101\",\"division\":\"A\",\"percent\":\"50.0\""));
+        assertTrue(history.contains("\"days\":[{\"date\":\"2026-11-03\",\"status\":\"PRESENT\"},"
+                + "{\"date\":\"2026-11-04\",\"status\":\"ABSENT\"}]"));
+        assertEquals(404, get("/api/history?id=9").statusCode());
+        assertEquals(400, get("/api/history?id=x").statusCode());
+    }
+
+    @Test
+    void editingAStudentRunsHooksAndKeepsRollNumbersUnique() throws Exception {
+        MemoryDatabase database = new MemoryDatabase();
+        database.add("Asha Rao", "101", "A");
+        database.add("Ben Cole", "102", "A");
+        List<String> calls = new ArrayList<>();
+        HookManager hooks = new HookManager();
+        hooks.register(new ValidationHook());
+        hooks.register(new Hook() {
+            @Override
+            public void afterUpdateStudent(String name, String rollNumber, String division) {
+                calls.add("after " + name + " " + rollNumber + " " + division);
+            }
+        });
+        start(database, hooks);
+
+        assertEquals(200, post("/api/students/update", "id=1&name=Asha+R&roll=111&division=b").statusCode());
+        assertEquals("Asha R", database.students.get(0)[0]);
+        assertEquals("111", database.students.get(0)[1]);
+        assertEquals("B", database.students.get(0)[2]);
+        assertEquals(List.of("after Asha R 111 b"), calls);
+
+        HttpResponse<String> blank = post("/api/students/update", "id=1&name=&roll=111&division=B");
+        assertEquals(400, blank.statusCode());
+        assertTrue(blank.body().contains("Name cannot be blank."));
+
+        HttpResponse<String> duplicate = post("/api/students/update", "id=1&name=Asha&roll=102&division=A");
+        assertEquals(409, duplicate.statusCode());
+        assertEquals(404, post("/api/students/update", "id=9&name=X&roll=900&division=A").statusCode());
+    }
+
+    @Test
+    void deletingAStudentAlsoDeletesTheirMarks() throws Exception {
+        MemoryDatabase database = new MemoryDatabase();
+        database.add("Asha Rao", "101", "A");
+        database.add("Ben Cole", "102", "A");
+        database.markAttendance(1, LocalDate.of(2026, 11, 3), "PRESENT");
+        database.markAttendance(2, LocalDate.of(2026, 11, 3), "ABSENT");
+        List<String> calls = new ArrayList<>();
+        HookManager hooks = new HookManager();
+        hooks.register(new Hook() {
+            @Override
+            public void beforeDeleteStudent(String name, String rollNumber) {
+                calls.add("before " + name + " " + rollNumber);
+            }
+        });
+        start(database, hooks);
+
+        assertEquals(200, post("/api/students/delete", "id=1").statusCode());
+        assertEquals(List.of("before Asha Rao 101"), calls);
+        String list = get("/api/students").body();
+        assertFalse(list.contains("Asha Rao"));
+        assertTrue(list.contains("Ben Cole"));
+        assertEquals(1, database.marks.size());
+
+        assertEquals(404, post("/api/students/delete", "id=1").statusCode());
+        assertEquals(400, post("/api/students/delete", "id=abc").statusCode());
+    }
+
+    @Test
+    void markingAWholeClassSavesEveryMarkOrNone() throws Exception {
+        MemoryDatabase database = new MemoryDatabase();
+        database.add("Asha Rao", "101", "A");
+        database.add("Ben Cole", "102", "A");
+        database.add("Cara Diaz", "201", "B");
+        HookManager hooks = new HookManager();
+        hooks.register(new FutureDateHook());
+        start(database, hooks);
+
+        HttpResponse<String> ok = post("/api/attendance/all",
+                "date=2026-11-09&marks=1%3APRESENT%2C2%3AABSENT%2C3%3APRESENT");
+        assertEquals(200, ok.statusCode());
+        assertTrue(ok.body().contains("\"saved\":3,\"present\":2,\"absent\":1"));
+        assertEquals(3, database.marks.size());
+
+        // Saving the same day again changes the marks instead of adding new ones.
+        assertEquals(200, post("/api/attendance/all", "date=2026-11-09&marks=2%3APRESENT").statusCode());
+        assertEquals(3, database.marks.size());
+        assertTrue(get("/api/students?date=2026-11-09").body().contains("\"name\":\"Ben Cole\",\"division\":\"A\",\"present\":1,\"absent\":0"));
+
+        String tomorrow = LocalDate.now().plusDays(1).toString();
+        HttpResponse<String> future = post("/api/attendance/all", "date=" + tomorrow + "&marks=1%3APRESENT");
+        assertEquals(400, future.statusCode());
+        assertTrue(future.body().contains("future date"));
+
+        assertEquals(404, post("/api/attendance/all", "date=2026-11-10&marks=1%3APRESENT%2C99%3AABSENT").statusCode());
+        assertEquals(400, post("/api/attendance/all", "date=2026-11-10&marks=1%3ALATE").statusCode());
+        assertEquals(400, post("/api/attendance/all", "date=2026-11-10&marks=").statusCode());
+        assertEquals(3, database.marks.size());
     }
 
     @Test
@@ -209,6 +349,10 @@ class WebServerTest {
         assertEquals(503, get("/export").statusCode());
         assertEquals(200, get("/").statusCode());
         assertEquals(503, get("/api/students").statusCode());
+
+        HttpResponse<String> login = post("/api/login", "username=admin&password=admin123");
+        assertEquals(503, login.statusCode());
+        assertTrue(login.body().contains("Cannot reach MySQL"));
     }
 
     @Test
@@ -262,10 +406,15 @@ class WebServerTest {
         server = new WebServer(database, hooks);
         server.start("127.0.0.1", 0);
         base = "http://127.0.0.1:" + server.getPort();
+        cookie = "session=" + server.startSession("admin");
     }
 
     private HttpRequest.Builder request(String path) {
-        return HttpRequest.newBuilder(URI.create(base + path));
+        HttpRequest.Builder builder = HttpRequest.newBuilder(URI.create(base + path));
+        if (cookie != null) {
+            builder.header("Cookie", cookie);
+        }
+        return builder;
     }
 
     private HttpResponse<String> get(String path) throws Exception {
@@ -316,7 +465,7 @@ class WebServerTest {
         @Override
         public void addStudent(String name, String rollNumber, String division) throws SQLException {
             for (String[] student : students) {
-                if (student[1].equals(rollNumber.trim())) {
+                if (student != null && student[1].equals(rollNumber.trim())) {
                     throw new SQLException("Duplicate entry", "23000", 1062);
                 }
             }
@@ -324,10 +473,48 @@ class WebServerTest {
         }
 
         @Override
+        public boolean updateStudent(int id, String name, String rollNumber, String division) throws SQLException {
+            if (id < 1 || id > students.size() || students.get(id - 1) == null) {
+                return false;
+            }
+            for (int i = 0; i < students.size(); i++) {
+                if (i != id - 1 && students.get(i) != null && students.get(i)[1].equals(rollNumber.trim())) {
+                    throw new SQLException("Duplicate entry", "23000", 1062);
+                }
+            }
+            students.set(id - 1, new String[] {name.trim(), rollNumber.trim(), division.trim().toUpperCase()});
+            return true;
+        }
+
+        @Override
+        public boolean checkLogin(String username, String password) {
+            return "admin".equals(username) && "admin123".equals(password);
+        }
+
+        @Override
+        public List<String[]> studentHistory(int studentId) {
+            List<String[]> days = new ArrayList<>();
+            for (String[] mark : marks) {
+                if (mark[0].equals(String.valueOf(studentId))) {
+                    days.add(new String[] {mark[1], mark[2]});
+                }
+            }
+            days.sort((a, b) -> a[0].compareTo(b[0]));
+            return days;
+        }
+
+        @Override
+        public void deleteStudent(int id) {
+            marks.removeIf(mark -> mark[0].equals(String.valueOf(id)));
+            // Keep the slot so the other students keep their ids, like AUTO_INCREMENT.
+            students.set(id - 1, null);
+        }
+
+        @Override
         public List<String> listDivisions() {
             List<String> divisions = new ArrayList<>();
             for (String[] student : students) {
-                if (!divisions.contains(student[2])) {
+                if (student != null && !divisions.contains(student[2])) {
                     divisions.add(student[2]);
                 }
             }
@@ -344,6 +531,9 @@ class WebServerTest {
             List<StudentRecord> rows = new ArrayList<>();
             for (int i = 0; i < students.size(); i++) {
                 String[] student = students.get(i);
+                if (student == null) {
+                    continue;
+                }
                 if (!"All".equals(divisionFilter) && !student[2].equals(divisionFilter)) {
                     continue;
                 }

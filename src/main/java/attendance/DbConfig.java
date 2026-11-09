@@ -27,6 +27,11 @@ public class DbConfig {
         this.password = password;
     }
 
+    /**
+     * Reads db.properties. A .properties file is plain text with one {@code key=value} per line,
+     * and Java's {@link Properties} class reads it for us. A missing key falls back to a default.
+     * Any problem becomes an IOException with a message the page can show.
+     */
     public static DbConfig load(Path file) throws IOException {
         if (!Files.isRegularFile(file)) {
             throw new IOException("Could not read " + file.toAbsolutePath()
