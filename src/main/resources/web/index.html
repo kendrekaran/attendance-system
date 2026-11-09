@@ -5,10 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Student Attendance System</title>
     <style>
+        /* Make width and height include padding and border, so boxes are easier to size. */
         * {
             box-sizing: border-box;
         }
 
+        /* The whole page: font, text colour, and the light grey background. */
         body {
             margin: 0;
             font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -20,12 +22,16 @@
 
         /* ---------- top bar ---------- */
 
+        /* The dark blue bar at the top.
+           rgba(0, 0, 0, 0.15) means black at 15% strength. It gives a soft shadow under the bar. */
         .navbar {
             background-color: #1e3a8a;
             color: white;
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
         }
 
+        /* display: flex puts the logo, the tabs and the user side by side in one row.
+           gap adds space between them. flex-wrap lets them move to a new line on small screens. */
         .nav-inner {
             max-width: 1100px;
             margin: 0 auto;
@@ -44,6 +50,8 @@
             font-weight: 700;
         }
 
+        /* The rounded square behind the clipboard icon.
+           rgba(255, 255, 255, 0.15) is white at 15%, so the blue shows through it. */
         .logo {
             display: inline-flex;
             align-items: center;
@@ -54,6 +62,7 @@
             background-color: rgba(255, 255, 255, 0.15);
         }
 
+        /* The group of three tab buttons. flex: 1 lets it take the free space in the middle of the bar. */
         .tabs {
             display: flex;
             gap: 6px;
@@ -77,11 +86,13 @@
             background-color: rgba(255, 255, 255, 0.08);
         }
 
+        /* showTab() in the JavaScript adds the class active to the tab that is open. */
         .tab.active {
             color: white;
             background-color: rgba(255, 255, 255, 0.18);
         }
 
+        /* Right side of the bar: the avatar circle, the username and the Logout button. */
         .user {
             display: flex;
             align-items: center;
@@ -89,6 +100,7 @@
             font-size: 14px;
         }
 
+        /* border-radius: 50% turns the square into a circle. */
         .avatar {
             display: inline-flex;
             align-items: center;
@@ -104,6 +116,8 @@
 
         /* ---------- page layout ---------- */
 
+        /* Keeps the content in the middle of the screen and no wider than 1100px.
+           margin: 0 auto means no space on top and bottom, and equal space left and right. */
         .container {
             max-width: 1100px;
             margin: 0 auto;
@@ -125,6 +139,7 @@
             color: #6b7280;
         }
 
+        /* A white box with rounded corners and a light shadow. Every part of a page sits in one. */
         .card {
             background-color: white;
             border: 1px solid #e5e7eb;
@@ -134,6 +149,8 @@
             margin-bottom: 20px;
         }
 
+        /* Title on the left, filter or button on the right.
+           justify-content: space-between pushes the two ends apart. */
         .card-header {
             display: flex;
             align-items: center;
@@ -149,6 +166,7 @@
             color: #111827;
         }
 
+        /* The small number next to All Students. A border-radius of 999px makes a pill shape. */
         .count {
             display: inline-block;
             margin-left: 6px;
@@ -163,6 +181,9 @@
 
         /* ---------- forms ---------- */
 
+        /* CSS grid lays the Add Student form out in 4 columns:
+           name (2fr = twice as wide), roll number, division, and the button (auto = as wide as it needs).
+           align-items: end lines the button up with the bottom of the input boxes. */
         .form-grid {
             display: grid;
             grid-template-columns: 2fr 1fr 1fr auto;
@@ -170,6 +191,7 @@
             align-items: end;
         }
 
+        /* display: block puts each label on its own line, above its input. */
         .field label {
             display: block;
             margin-bottom: 5px;
@@ -178,6 +200,7 @@
             color: #374151;
         }
 
+        /* Every text box, date box and dropdown. width: 100% makes each one fill its column. */
         input, select {
             width: 100%;
             padding: 9px 11px;
@@ -189,12 +212,14 @@
             border-radius: 6px;
         }
 
+        /* :focus is the box you are typing in. A soft blue ring replaces the browser's default outline. */
         input:focus, select:focus {
             outline: none;
             border-color: #2563eb;
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
         }
 
+        /* A row of filters such as Date and Division. It wraps onto new lines on small screens. */
         .filters {
             display: flex;
             align-items: end;
@@ -208,6 +233,8 @@
 
         /* ---------- buttons ---------- */
 
+        /* Base style for every button. The extra classes below (.btn-green, .btn-small and so on)
+           only change the colour or the size. :hover is the style while the mouse is over it. */
         .btn {
             display: inline-block;
             padding: 9px 18px;
@@ -269,6 +296,7 @@
             background-color: #fef2f2;
         }
 
+        /* The see-through Logout button on the dark blue bar. */
         .btn-light {
             background-color: rgba(255, 255, 255, 0.15);
             border-color: rgba(255, 255, 255, 0.35);
@@ -278,6 +306,7 @@
             background-color: rgba(255, 255, 255, 0.25);
         }
 
+        /* The row with Mark All Present and Save Attendance, pushed to the right side. */
         .actions {
             display: flex;
             justify-content: flex-end;
@@ -287,12 +316,15 @@
 
         /* ---------- tables ---------- */
 
+        /* The box around each table. overflow-x: auto adds a sideways scrollbar
+           when the table is wider than the screen, for example on a phone. */
         .table-wrap {
             overflow-x: auto;
             border: 1px solid #e5e7eb;
             border-radius: 8px;
         }
 
+        /* border-collapse: collapse joins the cell borders into single thin lines. */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -313,10 +345,12 @@
             letter-spacing: 0.04em;
         }
 
+        /* :last-child is the last row. It needs no line under it. */
         tbody tr:last-child td {
             border-bottom: none;
         }
 
+        /* Light blue background on the row under the mouse. */
         tbody tr:hover td {
             background-color: #f8faff;
         }
@@ -338,6 +372,7 @@
             font-weight: 600;
         }
 
+        /* The grey text shown when a table has no rows, like No students yet. */
         .empty {
             padding: 28px;
             text-align: center;
@@ -346,6 +381,7 @@
 
         /* ---------- badges ---------- */
 
+        /* Small rounded labels: OK, Below 75%, Present, Absent, and the counts above the attendance table. */
         .badge {
             display: inline-block;
             padding: 2px 10px;
@@ -369,6 +405,7 @@
             color: #6b7280;
         }
 
+        /* The small A or B label in the Division column. */
         .division-badge {
             display: inline-block;
             min-width: 28px;
@@ -381,6 +418,7 @@
             text-align: center;
         }
 
+        /* Attendance % in red when it is below 75%. loadReport() decides which class each row gets. */
         .percent-low {
             color: #dc2626;
             font-weight: 700;
@@ -392,12 +430,17 @@
 
         /* ---------- Present / Absent choice ---------- */
 
+        /* The Present and Absent pill buttons on the Mark Attendance tab.
+           Each pill is a label that holds a radio button and a span with the text.
+           Clicking anywhere on a label clicks the radio inside it, so the pill works like a radio button. */
         .choice {
             position: relative;
             display: inline-block;
             cursor: pointer;
         }
 
+        /* Hide the round radio dot, but keep it in the page so clicking and the keyboard still work.
+           display: none would remove it completely, and then the keyboard could not reach it. */
         .choice input {
             position: absolute;
             opacity: 0;
@@ -420,10 +463,14 @@
             border-color: #9ca3af;
         }
 
+        /* The + means the span that comes right after the input.
+           When the hidden radio has keyboard focus, we draw a ring around its pill. */
         .choice input:focus-visible + span {
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3);
         }
 
+        /* :checked is the radio that is selected. Its pill turns green for Present
+           and red for Absent. This is how the pills show the choice with no JavaScript. */
         .choice.present input:checked + span {
             background-color: #16a34a;
             border-color: #16a34a;
@@ -436,6 +483,7 @@
             color: white;
         }
 
+        /* The Present, Absent and Not marked counts above the attendance table. */
         .totals {
             display: flex;
             gap: 10px;
@@ -445,6 +493,8 @@
 
         /* ---------- messages ---------- */
 
+        /* The green or red message box at the top of the page.
+           showMessage() sets its text and adds the class success or error. */
         .message {
             padding: 11px 15px;
             border-radius: 8px;
@@ -464,6 +514,7 @@
             color: #991b1b;
         }
 
+        /* Small grey helper text. */
         .note {
             margin: 10px 0 0;
             color: #6b7280;
@@ -472,6 +523,9 @@
 
         /* ---------- login ---------- */
 
+        /* Login page. min-height: 100vh makes the blue background fill the whole screen
+           (vh means viewport height). Flexbox with align-items: center and
+           justify-content: center puts the login card in the exact middle. */
         .login-wrap {
             min-height: 100vh;
             display: flex;
@@ -481,6 +535,7 @@
             background-color: #1e3a8a;
         }
 
+        /* The white login card. */
         .login-box {
             width: 100%;
             max-width: 380px;
@@ -522,6 +577,7 @@
             padding: 11px;
         }
 
+        /* The small grey line at the bottom of the page. */
         footer {
             text-align: center;
             color: #9ca3af;
@@ -529,6 +585,8 @@
             padding: 6px 0 24px;
         }
 
+        /* @media rules only apply when the screen is 700px wide or less, so on phones.
+           The form uses 2 columns instead of 4, and the tabs move onto their own line. */
         @media (max-width: 700px) {
             .form-grid {
                 grid-template-columns: 1fr 1fr;
@@ -556,9 +614,12 @@
 <body>
 
 <!-- Login page. Shown until the teacher logs in. -->
+<!-- It starts hidden (display: none). checkLogin() and showLoginPage() decide when to show it.
+     Submitting the form calls login(event) in the script at the bottom. -->
 <div id="login-page" style="display: none;">
     <div class="login-wrap">
         <div class="login-box">
+            <!-- A small clipboard icon drawn with SVG shapes, so no image file is needed. -->
             <span class="logo">
                 <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="m9 13 2 2 4-4"/></svg>
             </span>
@@ -566,6 +627,7 @@
             <p class="subtitle">Teacher Login</p>
             <div id="login-message" class="message error" style="display: none;"></div>
             <form onsubmit="login(event)">
+                <!-- for="username" links the label to the input with id="username". Clicking the label puts the cursor in the box. -->
                 <div class="field">
                     <label for="username">Username</label>
                     <input id="username" autocomplete="username" placeholder="Enter username">
@@ -581,8 +643,11 @@
 </div>
 
 <!-- The app. Shown after login. -->
+<!-- showApp() shows this part after a correct login. It holds the top bar, the three tabs and the footer. -->
 <div id="app-page" style="display: none;">
 
+<!-- Top bar: app name, the three tab buttons, and the logged-in user with Logout.
+     Each tab button calls showTab() with the name of the section to show. -->
 <div class="navbar">
     <div class="nav-inner">
         <div class="brand">
@@ -604,10 +669,13 @@
     </div>
 </div>
 
+<!-- Main content. Only one of the three sections below is visible at a time. -->
 <div class="container">
+    <!-- Message box for success and error messages. showMessage() fills it and hideMessage() hides it. -->
     <div id="message" class="message" style="display: none;"></div>
 
     <!-- Students tab -->
+    <!-- The Add Student form calls saveStudent(event). loadStudents() fills the table below it. -->
     <div id="students-section">
         <div class="page-title">
             <h1>Students</h1>
@@ -667,6 +735,8 @@
     </div>
 
     <!-- Mark Attendance tab -->
+    <!-- loadAttendance() fills the table with one row per student and two pill buttons.
+         Changing the date or the division loads the list again. -->
     <div id="attendance-section" style="display: none;">
         <div class="page-title">
             <h1>Mark Attendance</h1>
@@ -685,6 +755,7 @@
                 </div>
             </div>
 
+            <!-- updateTotals() keeps these three numbers up to date. -->
             <div class="totals">
                 <span class="badge badge-present">Present: <span id="total-present">0</span></span>
                 <span class="badge badge-absent">Absent: <span id="total-absent">0</span></span>
@@ -701,6 +772,8 @@
                         <th class="center">Status</th>
                     </tr>
                     </thead>
+                    <!-- onchange on the table body catches a click on any pill in the table,
+                         because the change event bubbles up from the radio button to its parents. -->
                     <tbody id="attendance-table" onchange="updateTotals()"></tbody>
                 </table>
             </div>
@@ -712,6 +785,7 @@
     </div>
 
     <!-- Attendance Report tab -->
+    <!-- loadReport() fills the table. The Export to Excel button calls exportExcel(). -->
     <div id="report-section" style="display: none;">
         <div class="page-title">
             <h1>Attendance Report</h1>
@@ -747,6 +821,8 @@
             </div>
         </div>
 
+        <!-- History box. Hidden until a View button in the report calls viewHistory(id).
+             Its Close button calls closeHistory(). -->
         <div class="card" id="history-box" style="display: none;">
             <div class="card-header">
                 <h2 id="history-title">Attendance History</h2>
@@ -773,19 +849,25 @@
 
 </div>
 
+<!-- All the JavaScript for the page. It talks to the Java server with fetch() and builds the tables. -->
 <script>
     // Every POST must send this header. The server refuses POSTs without it.
+    // This stops another website from secretly sending forms to our server.
+    // Content-Type tells the server the body looks like name=value&name2=value2.
     var POST_HEADERS = {
         "X-Requested-With": "attendance",
         "Content-Type": "application/x-www-form-urlencoded"
     };
 
+    // Variables made here, outside any function, are global: every function below can use them.
     var studentsOnPage = [];   // students shown in the Students tab
     var studentList = [];      // students shown in the Mark Attendance tab
     var editingId = null;      // id of the student being edited, or null when adding
 
     // ---------- start ----------
 
+    // This part runs once, when the page loads: put today's date in the date box,
+    // stop the date box from picking future days, then check if we are already logged in.
     document.getElementById("attendance-date").value = today();
     document.getElementById("attendance-date").max = today();
     checkLogin();
@@ -793,9 +875,14 @@
     // ---------- login and logout ----------
 
     // Asks the server if we are already logged in (the session cookie is sent automatically).
+    // Called once when the page loads. Shows the app if we are logged in, otherwise the login page.
+    // async means the function can use await to wait for the server without freezing the page.
     async function checkLogin() {
         try {
+            // fetch() sends a request to the Java server, and await waits for the answer.
+            // The browser adds the session cookie by itself. JavaScript cannot even read it (it is HttpOnly).
             var response = await fetch("/api/me");
+            // response.ok is true for status codes 200 to 299. Not logged in gives 401.
             if (response.ok) {
                 var data = await response.json();
                 showApp(data.username);
@@ -807,11 +894,15 @@
         showLoginPage("");
     }
 
+    // Runs when the login form is submitted (onsubmit="login(event)" in the HTML).
     async function login(event) {
+        // A form normally reloads the page when submitted. preventDefault() stops that.
         event.preventDefault();
         var box = document.getElementById("login-message");
         box.style.display = "none";
         try {
+            // POST the username and password. URLSearchParams turns the object into
+            // username=admin&password=... which is the format the server reads.
             var response = await fetch("/api/login", {
                 method: "POST",
                 headers: POST_HEADERS,
@@ -821,12 +912,14 @@
                 }).toString()
             });
             var data = await response.json();
+            // 401 means a wrong username or password. Show the server's message.
             if (!response.ok) {
                 box.textContent = data.error;
                 box.className = "message error";
                 box.style.display = "block";
                 return;
             }
+            // Login worked and the server has set the session cookie. Clear the password box and open the app.
             document.getElementById("password").value = "";
             showApp(data.username);
         } catch (e) {
@@ -836,6 +929,7 @@
         }
     }
 
+    // Called by the Logout button in the top bar. The server forgets our session, then we show the login page.
     async function logout() {
         try {
             await fetch("/api/logout", { method: "POST", headers: POST_HEADERS });
@@ -845,6 +939,8 @@
         showLoginPage("You have logged out.");
     }
 
+    // Hides the login page and shows the app. Called by checkLogin() and login().
+    // charAt(0) takes the first letter of the username for the round avatar.
     function showApp(username) {
         document.getElementById("current-user").textContent = username;
         document.getElementById("avatar").textContent = username.charAt(0);
@@ -853,6 +949,8 @@
         showTab("students");
     }
 
+    // Hides the app and shows the login page, with an optional message.
+    // Called by checkLogin(), logout(), and whenever the server says we are not logged in.
     function showLoginPage(text) {
         document.getElementById("app-page").style.display = "none";
         document.getElementById("login-page").style.display = "block";
@@ -865,6 +963,8 @@
 
     // ---------- tabs and messages ----------
 
+    // Called by the three tab buttons. Shows one section, hides the other two,
+    // highlights the right tab, and loads fresh data for that section.
     function showTab(name) {
         var tabs = ["students", "attendance", "report"];
         for (var i = 0; i < tabs.length; i++) {
@@ -883,6 +983,7 @@
         }
     }
 
+    // Shows the message box at the top. type is "success" (green) or "error" (red), which are CSS classes.
     function showMessage(text, type) {
         var box = document.getElementById("message");
         box.textContent = text;
@@ -890,6 +991,7 @@
         box.style.display = "block";
     }
 
+    // Hides the message box. Called when switching tabs and when starting an edit.
     function hideMessage() {
         document.getElementById("message").style.display = "none";
     }
@@ -897,6 +999,8 @@
     // ---------- talking to the server ----------
 
     // Gets students from the server. Returns null and shows an error if it fails.
+    // Used by all three tabs. With a date, each student also has that day's mark in dayStatus.
+    // encodeURIComponent makes the division text safe to put inside a URL.
     async function getStudents(division, date) {
         var url = "/api/students?division=" + encodeURIComponent(division);
         if (date) {
@@ -905,10 +1009,13 @@
         try {
             var response = await fetch(url);
             var data = await response.json();
+            // The server answers 401 with loggedIn: false when our session is missing or old,
+            // for example after the server restarts. Send the user back to the login page.
             if (data.loggedIn === false) {
                 showLoginPage("Please log in again.");
                 return null;
             }
+            // Any other error, such as 503 when MySQL is not running. The server puts the reason in data.error.
             if (!response.ok) {
                 showMessage(data.error + " " + (data.detail || ""), "error");
                 return null;
@@ -921,6 +1028,7 @@
     }
 
     // Sends a form to the server. Returns the reply, or null if it failed.
+    // Used to add, edit and delete students and to save attendance.
     async function postForm(url, fields) {
         try {
             var response = await fetch(url, {
@@ -929,10 +1037,12 @@
                 body: new URLSearchParams(fields).toString()
             });
             var data = await response.json();
+            // Not logged in any more: back to the login page (same as in getStudents).
             if (data.loggedIn === false) {
                 showLoginPage("Please log in again.");
                 return null;
             }
+            // For example 400 for bad input such as a blank name, or 409 when the roll number is already used.
             if (!response.ok) {
                 showMessage(data.error, "error");
                 return null;
@@ -945,6 +1055,7 @@
     }
 
     // Fills a division dropdown with "All" and every division, keeping the current choice.
+    // Called after every load, so a new division (like C) shows up in the dropdowns by itself.
     function fillDivisions(selectId, divisions) {
         var select = document.getElementById(selectId);
         var current = select.value || "All";
@@ -961,6 +1072,8 @@
 
     // ---------- Students tab ----------
 
+    // Fills the All Students table. Called by showTab("students"), by the Division dropdown,
+    // and after a student is added, edited or deleted.
     async function loadStudents() {
         var division = document.getElementById("students-division").value || "All";
         var data = await getStudents(division);
@@ -970,6 +1083,9 @@
         fillDivisions("students-division", data.divisions);
         document.getElementById("student-count").textContent = data.students.length;
 
+        // Build all the table rows as one long HTML string, then put it in the page once with innerHTML.
+        // escapeHtml() is used on every name and roll number. Without it, a name like
+        // <img src=x onerror=alert(1)> would run as code. Escaping shows it as plain text instead.
         var html = "";
         for (var i = 0; i < data.students.length; i++) {
             var s = data.students[i];
@@ -978,6 +1094,7 @@
                 + '<td class="name">' + escapeHtml(s.name) + "</td>"
                 + '<td><span class="division-badge">' + escapeHtml(s.division) + "</span></td>"
                 + '<td class="right">'
+                // Each button remembers its student by putting the id in onclick, for example editStudent(3).
                 + '<button class="btn btn-small btn-outline" onclick="editStudent(' + s.id + ')">Edit</button> '
                 + '<button class="btn btn-small btn-outline-red" onclick="deleteStudent(' + s.id + ')">Delete</button>'
                 + "</td>"
@@ -987,9 +1104,12 @@
             html = '<tr><td colspan="4" class="empty">No students yet. Add one above.</td></tr>';
         }
         document.getElementById("students-table").innerHTML = html;
+        // Keep the list, so editStudent() and deleteStudent() can find a student by id.
         studentsOnPage = data.students;
     }
 
+    // Runs when the Add Student form is submitted. Adds a new student, or saves an edit
+    // when editingId is set (the button then says Update Student).
     async function saveStudent(event) {
         event.preventDefault();
         var fields = {
@@ -1011,6 +1131,8 @@
         loadStudents();
     }
 
+    // Called by an Edit button. Copies the student into the form and switches the form to edit mode.
+    // saveStudent() then sends the change to /api/students/update.
     function editStudent(id) {
         var students = studentsOnPage;
         for (var i = 0; i < students.length; i++) {
@@ -1029,6 +1151,7 @@
         }
     }
 
+    // Called by the Cancel button and after saving. form.reset() empties the inputs.
     function cancelEdit() {
         editingId = null;
         document.getElementById("student-form").reset();
@@ -1037,6 +1160,7 @@
         document.getElementById("cancel-button").style.display = "none";
     }
 
+    // Called by a Delete button. confirm() shows the browser's OK / Cancel box first.
     async function deleteStudent(id) {
         var students = studentsOnPage;
         var name = "this student";
@@ -1061,6 +1185,8 @@
 
     // ---------- Mark Attendance tab ----------
 
+    // Fills the Mark Attendance table. Called by showTab("attendance"), by the Date and Division boxes,
+    // and after saving.
     async function loadAttendance() {
         var date = document.getElementById("attendance-date").value;
         var division = document.getElementById("attendance-division").value || "All";
@@ -1078,6 +1204,8 @@
         var html = "";
         for (var i = 0; i < studentList.length; i++) {
             var s = studentList[i];
+            // dayStatus is the saved mark for the chosen date: PRESENT, ABSENT or null.
+            // condition ? a : b is a short if/else. It adds the word checked to the radio that should be selected.
             var presentChecked = s.dayStatus === "PRESENT" ? " checked" : "";
             var absentChecked = s.dayStatus === "ABSENT" ? " checked" : "";
             html += "<tr>"
@@ -1085,6 +1213,8 @@
                 + '<td class="name">' + escapeHtml(s.name) + "</td>"
                 + '<td><span class="division-badge">' + escapeHtml(s.division) + "</span></td>"
                 + '<td class="center">'
+                // Both radios use the same name, status-ID, so only one of the two can be selected.
+                // The CSS (.choice) turns them into the Present and Absent pills.
                 + '<label class="choice present"><input type="radio" name="status-' + s.id + '" value="PRESENT"' + presentChecked + '><span>Present</span></label> '
                 + '<label class="choice absent"><input type="radio" name="status-' + s.id + '" value="ABSENT"' + absentChecked + '><span>Absent</span></label>'
                 + "</td>"
@@ -1098,10 +1228,13 @@
     }
 
     // Counts how many students are marked Present, Absent, or not marked yet.
+    // Called by loadAttendance(), markAllPresent(), and onchange on the table body.
     function updateTotals() {
         var present = 0;
         var absent = 0;
         for (var i = 0; i < studentList.length; i++) {
+            // querySelector finds the first element that matches a CSS selector.
+            // :checked only matches the selected radio, so this is null when neither pill is picked.
             var checked = document.querySelector('input[name="status-' + studentList[i].id + '"]:checked');
             if (checked && checked.value === "PRESENT") {
                 present++;
@@ -1114,6 +1247,8 @@
         document.getElementById("total-none").textContent = studentList.length - present - absent;
     }
 
+    // Called by the Mark All Present button. Selects Present for every student in the list.
+    // Nothing is saved until Save Attendance is clicked.
     function markAllPresent() {
         for (var i = 0; i < studentList.length; i++) {
             var radio = document.querySelector('input[name="status-' + studentList[i].id + '"][value="PRESENT"]');
@@ -1124,12 +1259,15 @@
         updateTotals();
     }
 
+    // Called by the Save Attendance button. Sends the marks for the whole list in one request.
     async function saveAttendance() {
         var date = document.getElementById("attendance-date").value;
         var marks = [];
         for (var i = 0; i < studentList.length; i++) {
+            // The selected radio for this student, or null if not marked (see updateTotals).
             var checked = document.querySelector('input[name="status-' + studentList[i].id + '"]:checked');
             if (checked) {
+                // For example 3:ABSENT means the student with id 3 is absent.
                 marks.push(studentList[i].id + ":" + checked.value);
             }
         }
@@ -1137,6 +1275,8 @@
             showMessage("Please mark at least one student.", "error");
             return;
         }
+        // marks.join(",") makes one string like 1:PRESENT,2:ABSENT,3:PRESENT (student id : status).
+        // The server checks every mark first, so if one is wrong, nothing is saved.
         var reply = await postForm("/api/attendance/all", { date: date, marks: marks.join(",") });
         if (reply === null) {
             return;
@@ -1148,6 +1288,7 @@
 
     // ---------- Attendance Report tab ----------
 
+    // Fills the Attendance Report table. Called by showTab("report") and by the Division dropdown.
     async function loadReport() {
         var division = document.getElementById("report-division").value || "All";
         var data = await getStudents(division);
@@ -1159,6 +1300,8 @@
         var html = "";
         for (var i = 0; i < data.students.length; i++) {
             var s = data.students[i];
+            // The server sends the percent as text, or a dash when no day is marked yet.
+            // parseFloat turns text like "60.0" into the number 60, so we can compare it with 75.
             var notMarked = s.percent === "—";
             var low = !notMarked && parseFloat(s.percent) < 75;
             var remark = '<span class="badge badge-ok">OK</span>';
@@ -1185,10 +1328,12 @@
     }
 
     // Shows every marked day for one student under the report.
+    // Called by the View buttons in the report. Gets /api/history?id=... and fills the history box.
     async function viewHistory(id) {
         try {
             var response = await fetch("/api/history?id=" + id);
             var data = await response.json();
+            // Not logged in any more: back to the login page (same as in getStudents).
             if (data.loggedIn === false) {
                 showLoginPage("Please log in again.");
                 return;
@@ -1205,6 +1350,7 @@
                 if (isPresent) {
                     present++;
                 }
+                // Adding T00:00:00 makes JavaScript read the date in local time. Then we ask for the day name, like Monday.
                 var weekday = new Date(day.date + "T00:00:00").toLocaleDateString("en-GB", { weekday: "long" });
                 html += "<tr>"
                     + "<td>" + escapeHtml(day.date) + "</td>"
@@ -1221,16 +1367,20 @@
                 + data.days.length + " days. Attendance: " + (data.percent === "—" ? "—" : data.percent + "%");
             document.getElementById("history-table").innerHTML = html;
             document.getElementById("history-box").style.display = "block";
+            // Scroll the page down to the history box.
             document.getElementById("history-box").scrollIntoView({ behavior: "smooth" });
         } catch (e) {
             showMessage("Cannot reach the server. Is it running?", "error");
         }
     }
 
+    // Hides the history box. Called by its Close button and by showTab().
     function closeHistory() {
         document.getElementById("history-box").style.display = "none";
     }
 
+    // Called by the Export to Excel button. Opening /export makes the browser download the .xlsx file
+    // that the Java server builds with Apache POI. The session cookie goes along automatically.
     function exportExcel() {
         var division = document.getElementById("report-division").value || "All";
         window.location.href = "/export?division=" + encodeURIComponent(division);
@@ -1238,6 +1388,8 @@
 
     // ---------- small helpers ----------
 
+    // Today's date as yyyy-MM-dd (for example 2026-11-10), the format the date box and the server use.
+    // getMonth() counts from 0 (January is 0), so we add 1. padStart(2, "0") turns 7 into 07.
     function today() {
         var d = new Date();
         var month = String(d.getMonth() + 1).padStart(2, "0");
@@ -1246,6 +1398,8 @@
     }
 
     // Stops names like <b>Ravi</b> from being read as HTML.
+    // It swaps the special characters & < > " for safe codes like &lt;, so the browser shows them as text.
+    // Used everywhere we build HTML from data that came from the database.
     function escapeHtml(text) {
         return String(text)
             .replace(/&/g, "&amp;")

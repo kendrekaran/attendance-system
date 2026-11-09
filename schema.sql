@@ -30,6 +30,11 @@ CREATE TABLE users (
 INSERT INTO users (username, salt, password_hash) VALUES
     ('admin', 'k7Qz2mXa9Lp4', SHA2(CONCAT('k7Qz2mXa9Lp4', 'admin123'), 256));
 
+-- One row per student.
+--   id            AUTO_INCREMENT: MySQL gives each new row the next number (1, 2, 3...).
+--   PRIMARY KEY   the id is how other tables point at a student.
+--   UNIQUE KEY    two students can never have the same roll number (MySQL error 1062).
+--   NOT NULL      the column must always have a value.
 CREATE TABLE students (
     id INT NOT NULL AUTO_INCREMENT,
     name VARCHAR(100) NOT NULL,
@@ -40,6 +45,10 @@ CREATE TABLE students (
 ) ENGINE=InnoDB;
 
 -- One row per student per date. Deleting a student also deletes their rows here.
+--   ENUM('PRESENT', 'ABSENT')       the status can only be one of these two words.
+--   UNIQUE (student_id, date)       a student has at most one mark per day.
+--   FOREIGN KEY ... REFERENCES      student_id must be an id that exists in students.
+--   ON DELETE CASCADE               when a student is deleted, MySQL deletes their marks too.
 CREATE TABLE attendance (
     id INT NOT NULL AUTO_INCREMENT,
     student_id INT NOT NULL,
@@ -52,7 +61,9 @@ CREATE TABLE attendance (
         ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
--- NEW.division is the value being saved.
+-- A trigger is SQL that MySQL runs by itself when something happens to a table.
+-- BEFORE INSERT means "just before a new student row is saved".
+-- NEW.division is the value being saved, so we can change it before it is stored.
 CREATE TRIGGER students_uppercase_division
 BEFORE INSERT ON students
 FOR EACH ROW
