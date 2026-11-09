@@ -15,6 +15,8 @@ class ProjectFilesTest {
         assertTrue(sql.contains("CREATE DATABASE IF NOT EXISTS attendance_db"));
         assertTrue(sql.contains("CREATE TABLE students"));
         assertTrue(sql.contains("CREATE TABLE attendance"));
+        assertTrue(sql.contains("CREATE TABLE users"));
+        assertTrue(sql.contains("SHA2(CONCAT("));
         assertTrue(sql.contains("BEFORE INSERT ON students"));
         assertTrue(sql.contains("BEFORE UPDATE ON students"));
         assertTrue(sql.contains("SET NEW.division = UPPER(TRIM(NEW.division))"));

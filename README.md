@@ -2,11 +2,24 @@
 
 A small attendance website for a class. It stores students and each day's present or absent mark in MySQL, shows each student's attendance percentage, and downloads the report as an Excel file. A plain Java program serves one HTML page on your own computer with the JDK's built-in HTTP server. It uses no web framework.
 
-The page has three tabs:
+The teacher logs in first. The default login is username `admin` and password `admin123`. Logout is in the top bar. After login the page has three tabs:
 
 - **Students**: add a student (name, roll number, division), edit a student, or delete a student. Deleting a student also deletes their attendance.
 - **Mark Attendance**: pick a date and a division, choose Present or Absent for each student, and click Save Attendance. Mark All Present fills the whole list. Saving the same date again changes that day's marks instead of adding new ones.
-- **Attendance Report**: present days, absent days, and attendance % for every student. Students below 75% are shown in red. Export to Excel downloads the rows for the chosen division.
+- **Attendance Report**: present days, absent days, and attendance % for every student. Students below 75% are shown in red. View shows one student's attendance date by date. Export to Excel downloads the rows for the chosen division.
+
+## Login
+
+Teacher accounts are in the `users` table. The password is never stored as plain text: each user has a random `salt`, and `password_hash` is SHA-256 of salt + password. At login the server hashes what was typed the same way and compares the two hashes.
+
+After a correct login the server makes a random token, remembers which user it belongs to, and sends it to the browser in an `HttpOnly` cookie called `session`. Every request except the page itself and the login must carry that cookie, or the server answers "Please log in first." Logout forgets the token. Restarting the server logs everyone out.
+
+To add another teacher, run this in MySQL with your own username, salt, and password:
+
+```
+INSERT INTO users (username, salt, password_hash)
+VALUES ('teacher2', 'pick-any-salt', SHA2(CONCAT('pick-any-salt', 'their-password'), 256));
+```
 
 ## Setup
 
@@ -16,7 +29,7 @@ Install Java 17 or newer, Maven, and MySQL. Create the database and the sample s
 mysql -u root < schema.sql
 ```
 
-The sample has 12 students in divisions A and B, with one week of attendance (2 to 6 November 2026). Two students, roll 103 and roll 203, are below 75%. Running `schema.sql` again drops both tables and restores the sample.
+The sample has the `admin` login and 12 students in divisions A and B, with one week of attendance (2 to 6 November 2026). Two students, roll 103 and roll 203, are below 75%. Running `schema.sql` again drops the tables and restores the sample.
 
 Connection settings live in `db.properties` in this folder: `localhost`, port `3306`, database `attendance_db`, user `root`, and an empty password. The server reads that file from the folder it is started in, so run it from here. Edit the file if your MySQL account is different.
 
@@ -28,7 +41,7 @@ From this folder:
 mvn -q exec:java
 ```
 
-Then open http://localhost:8080 in a browser. The terminal prints whether MySQL connected. Press Ctrl+C to stop the server.
+Then open http://localhost:8080 in a browser and log in as `admin` / `admin123`. The terminal prints whether MySQL connected. Press Ctrl+C to stop the server.
 
 To use another port, pass it as an argument:
 
@@ -75,8 +88,8 @@ Export to Excel downloads `attendance.xlsx`, or `attendance-division-A.xlsx` whe
 All classes are in the `attendance` package.
 
 - `Main` registers the hooks and starts the server.
-- `WebServer` serves the page and the JSON requests it makes.
-- `Database` runs every query with `PreparedStatement`.
+- `WebServer` serves the page and the JSON requests it makes, and checks the login session.
+- `Database` runs every query with `PreparedStatement` and checks passwords.
 - `StudentRecord` holds one row and works out the percentage.
 - `ExcelExporter` builds the workbook with Apache POI.
 - `DbConfig` reads `db.properties`.

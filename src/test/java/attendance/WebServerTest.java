@@ -27,6 +27,8 @@ class WebServerTest {
     private final HttpClient client = HttpClient.newHttpClient();
     private WebServer server;
     private String base;
+    /** Sent with every request, so tests act as a logged-in teacher. Set to null to test the login. */
+    private String cookie;
 
     @AfterEach
     void stop() {
@@ -44,9 +46,60 @@ class WebServerTest {
         assertTrue(page.body().contains("Student Attendance System"));
         assertTrue(page.body().contains("Mark Attendance"));
         assertTrue(page.body().contains("Export to Excel"));
+        assertTrue(page.body().contains("Teacher Login"));
 
         assertEquals(404, get("/../db.properties").statusCode());
         assertEquals(404, get("/nope").statusCode());
+    }
+
+    @Test
+    void loginChecksThePasswordAndLogoutEndsTheSession() throws Exception {
+        MemoryDatabase database = new MemoryDatabase();
+        database.add("Asha Rao", "101", "A");
+        start(database, new HookManager());
+        cookie = null;
+
+        HttpResponse<String> notLoggedIn = get("/api/students");
+        assertEquals(401, notLoggedIn.statusCode());
+        assertTrue(notLoggedIn.body().contains("\"loggedIn\":false"));
+        assertEquals(401, get("/export").statusCode());
+        assertEquals(401, post("/api/students", "name=X&roll=1&division=A").statusCode());
+        assertEquals(1, database.students.size());
+
+        HttpResponse<String> wrong = post("/api/login", "username=admin&password=nope");
+        assertEquals(401, wrong.statusCode());
+        assertTrue(wrong.body().contains("Wrong username or password."));
+        assertEquals(400, post("/api/login", "username=admin&password=").statusCode());
+
+        HttpResponse<String> right = post("/api/login", "username=admin&password=admin123");
+        assertEquals(200, right.statusCode());
+        String setCookie = right.headers().firstValue("Set-Cookie").orElse("");
+        assertTrue(setCookie.contains("HttpOnly"));
+        cookie = setCookie.split(";")[0];
+
+        assertEquals(200, get("/api/students").statusCode());
+        assertTrue(get("/api/me").body().contains("\"username\":\"admin\""));
+
+        assertEquals(200, post("/api/logout", "").statusCode());
+        assertEquals(401, get("/api/students").statusCode());
+    }
+
+    @Test
+    void historyListsEveryMarkedDayOfOneStudent() throws Exception {
+        MemoryDatabase database = new MemoryDatabase();
+        database.add("Asha Rao", "101", "A");
+        database.add("Ben Cole", "102", "A");
+        database.markAttendance(1, LocalDate.of(2026, 11, 4), "ABSENT");
+        database.markAttendance(1, LocalDate.of(2026, 11, 3), "PRESENT");
+        database.markAttendance(2, LocalDate.of(2026, 11, 3), "PRESENT");
+        start(database, new HookManager());
+
+        String history = get("/api/history?id=1").body();
+        assertTrue(history.contains("\"name\":\"Asha Rao\",\"roll\":\"101\",\"division\":\"A\",\"percent\":\"50.0\""));
+        assertTrue(history.contains("\"days\":[{\"date\":\"2026-11-03\",\"status\":\"PRESENT\"},"
+                + "{\"date\":\"2026-11-04\",\"status\":\"ABSENT\"}]"));
+        assertEquals(404, get("/api/history?id=9").statusCode());
+        assertEquals(400, get("/api/history?id=x").statusCode());
     }
 
     @Test
@@ -296,6 +349,10 @@ class WebServerTest {
         assertEquals(503, get("/export").statusCode());
         assertEquals(200, get("/").statusCode());
         assertEquals(503, get("/api/students").statusCode());
+
+        HttpResponse<String> login = post("/api/login", "username=admin&password=admin123");
+        assertEquals(503, login.statusCode());
+        assertTrue(login.body().contains("Cannot reach MySQL"));
     }
 
     @Test
@@ -349,10 +406,15 @@ class WebServerTest {
         server = new WebServer(database, hooks);
         server.start("127.0.0.1", 0);
         base = "http://127.0.0.1:" + server.getPort();
+        cookie = "session=" + server.startSession("admin");
     }
 
     private HttpRequest.Builder request(String path) {
-        return HttpRequest.newBuilder(URI.create(base + path));
+        HttpRequest.Builder builder = HttpRequest.newBuilder(URI.create(base + path));
+        if (cookie != null) {
+            builder.header("Cookie", cookie);
+        }
+        return builder;
     }
 
     private HttpResponse<String> get(String path) throws Exception {
@@ -422,6 +484,23 @@ class WebServerTest {
             }
             students.set(id - 1, new String[] {name.trim(), rollNumber.trim(), division.trim().toUpperCase()});
             return true;
+        }
+
+        @Override
+        public boolean checkLogin(String username, String password) {
+            return "admin".equals(username) && "admin123".equals(password);
+        }
+
+        @Override
+        public List<String[]> studentHistory(int studentId) {
+            List<String[]> days = new ArrayList<>();
+            for (String[] mark : marks) {
+                if (mark[0].equals(String.valueOf(studentId))) {
+                    days.add(new String[] {mark[1], mark[2]});
+                }
+            }
+            days.sort((a, b) -> a[0].compareTo(b[0]));
+            return days;
         }
 
         @Override

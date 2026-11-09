@@ -10,10 +10,12 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,14 +26,20 @@ import java.util.Map;
  * Routes:
  * <ul>
  *     <li>{@code GET /} the page</li>
+ *     <li>{@code POST /api/login} log in (username, password), {@code POST /api/logout} log out</li>
+ *     <li>{@code GET /api/me} who is logged in</li>
  *     <li>{@code GET /api/students?division=All&date=yyyy-MM-dd} students for the filter</li>
  *     <li>{@code POST /api/students} add a student (name, roll, division)</li>
  *     <li>{@code POST /api/students/update} edit a student (id, name, roll, division)</li>
  *     <li>{@code POST /api/students/delete} delete a student and their marks (id)</li>
  *     <li>{@code POST /api/attendance} mark a day (studentId, date, status)</li>
  *     <li>{@code POST /api/attendance/all} mark a whole class (date, marks = id:STATUS,id:STATUS)</li>
+ *     <li>{@code GET /api/history?id=} every marked day for one student</li>
  *     <li>{@code GET /export?division=All} the filtered rows as an .xlsx download</li>
  * </ul>
+ * Everything except the page and the login needs a logged-in teacher. After login the browser
+ * keeps a random token in a cookie called {@code session}, and the server remembers which user it belongs to.
+ * <p>
  * Requests run one at a time, so the single JDBC connection is never shared between threads.
  */
 public class WebServer {
@@ -42,8 +50,13 @@ public class WebServer {
     private static final int MAX_BODY_BYTES = 64 * 1024;
     private static final String XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
+    private static final String SESSION_COOKIE = "session";
+
     private final Database database;
     private final HookManager hooks;
+    /** Logged-in users: session token -> username. Restarting the server logs everyone out. */
+    private final Map<String, String> sessions = new HashMap<>();
+    private final SecureRandom random = new SecureRandom();
     private HttpServer server;
 
     public WebServer(Database database, HookManager hooks) {
@@ -91,6 +104,28 @@ public class WebServer {
 
         if (path.equals("/") || path.equals("/index.html")) {
             requireGet(exchange, () -> sendResource(exchange, "web/index.html", "text/html; charset=utf-8"));
+            return;
+        }
+        if (path.equals("/api/login") && method.equals("POST")) {
+            login(exchange);
+            return;
+        }
+        if (path.equals("/api/logout") && method.equals("POST")) {
+            logout(exchange);
+            return;
+        }
+
+        // Everything below needs a logged-in teacher.
+        String username = loggedInUser(exchange);
+        if (username == null && (path.startsWith("/api/") || path.equals("/export"))) {
+            sendJson(exchange, 401, "{\"error\":\"Please log in first.\",\"loggedIn\":false}");
+            return;
+        }
+
+        if (path.equals("/api/me") && method.equals("GET")) {
+            sendJson(exchange, 200, "{\"loggedIn\":true,\"username\":" + json(username) + "}");
+        } else if (path.equals("/api/history") && method.equals("GET")) {
+            studentHistory(exchange);
         } else if (path.equals("/api/students") && method.equals("GET")) {
             listStudents(exchange);
         } else if (path.equals("/api/students") && method.equals("POST")) {
@@ -105,11 +140,128 @@ public class WebServer {
             markWholeClass(exchange);
         } else if (path.equals("/export")) {
             requireGet(exchange, () -> export(exchange));
-        } else if (path.startsWith("/api/students") || path.startsWith("/api/attendance")) {
+        } else if (path.startsWith("/api/students") || path.startsWith("/api/attendance")
+                || path.equals("/api/login") || path.equals("/api/logout") || path.equals("/api/me")
+                || path.equals("/api/history")) {
             sendError(exchange, 405, "Method not allowed.");
         } else {
             sendError(exchange, 404, "Not found.");
         }
+    }
+
+    private void login(HttpExchange exchange) throws IOException {
+        Map<String, String> form = readForm(exchange);
+        if (form == null) {
+            return;
+        }
+        String username = form.getOrDefault("username", "").trim();
+        String password = form.getOrDefault("password", "");
+        if (username.isEmpty() || password.isEmpty()) {
+            sendError(exchange, 400, "Enter your username and password.");
+            return;
+        }
+        if (!ensureDatabase(exchange)) {
+            return;
+        }
+        boolean correct;
+        try {
+            correct = database.checkLogin(username, password);
+        } catch (SQLException ex) {
+            sendDatabaseDown(exchange, ex);
+            return;
+        }
+        if (!correct) {
+            sendError(exchange, 401, "Wrong username or password.");
+            return;
+        }
+        String token = startSession(username);
+        exchange.getResponseHeaders().add("Set-Cookie",
+                SESSION_COOKIE + "=" + token + "; Path=/; HttpOnly; SameSite=Strict");
+        sendJson(exchange, 200, "{\"ok\":true,\"username\":" + json(username) + "}");
+    }
+
+    private void logout(HttpExchange exchange) throws IOException {
+        String token = sessionToken(exchange);
+        if (token != null) {
+            sessions.remove(token);
+        }
+        exchange.getResponseHeaders().add("Set-Cookie",
+                SESSION_COOKIE + "=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0");
+        sendJson(exchange, 200, "{\"ok\":true}");
+    }
+
+    /** Makes a random token for the user and remembers it. Tests call this to skip the login form. */
+    String startSession(String username) {
+        byte[] bytes = new byte[24];
+        random.nextBytes(bytes);
+        String token = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+        sessions.put(token, username);
+        return token;
+    }
+
+    /** The username for this request's session cookie, or null when nobody is logged in. */
+    private String loggedInUser(HttpExchange exchange) {
+        String token = sessionToken(exchange);
+        if (token == null) {
+            return null;
+        }
+        return sessions.get(token);
+    }
+
+    private static String sessionToken(HttpExchange exchange) {
+        String cookies = exchange.getRequestHeaders().getFirst("Cookie");
+        if (cookies == null) {
+            return null;
+        }
+        for (String cookie : cookies.split(";")) {
+            String pair = cookie.trim();
+            if (pair.startsWith(SESSION_COOKIE + "=")) {
+                return pair.substring(SESSION_COOKIE.length() + 1);
+            }
+        }
+        return null;
+    }
+
+    private void studentHistory(HttpExchange exchange) throws IOException {
+        Map<String, String> query = parseForm(exchange.getRequestURI().getRawQuery());
+        int id;
+        try {
+            id = Integer.parseInt(query.getOrDefault("id", "").trim());
+        } catch (NumberFormatException ex) {
+            sendError(exchange, 400, "Select a student first.");
+            return;
+        }
+        if (!ensureDatabase(exchange)) {
+            return;
+        }
+        StudentRecord student;
+        List<String[]> days;
+        try {
+            student = findStudent(id);
+            if (student == null) {
+                sendError(exchange, 404, "That student no longer exists. Refresh the list.");
+                return;
+            }
+            days = database.studentHistory(id);
+        } catch (SQLException ex) {
+            sendDatabaseDown(exchange, ex);
+            return;
+        }
+        StringBuilder out = new StringBuilder();
+        out.append("{\"name\":").append(json(student.getName()))
+                .append(",\"roll\":").append(json(student.getRollNumber()))
+                .append(",\"division\":").append(json(student.getDivision()))
+                .append(",\"percent\":").append(json(student.attendancePercent()))
+                .append(",\"days\":[");
+        for (int i = 0; i < days.size(); i++) {
+            if (i > 0) {
+                out.append(',');
+            }
+            out.append("{\"date\":").append(json(days.get(i)[0]))
+                    .append(",\"status\":").append(json(days.get(i)[1])).append('}');
+        }
+        out.append("]}");
+        sendJson(exchange, 200, out.toString());
     }
 
     private void listStudents(HttpExchange exchange) throws IOException {

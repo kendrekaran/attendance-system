@@ -35,12 +35,20 @@ class DatabaseFailureTest {
             assertThrows(SQLException.class, database::listDivisions);
             assertThrows(SQLException.class,
                     () -> database.markAttendance(1, LocalDate.of(2026, 11, 9), Database.PRESENT));
+            assertThrows(SQLException.class, () -> database.checkLogin("admin", "admin123"));
+            assertThrows(SQLException.class, () -> database.studentHistory(1));
 
             database.close();
             assertFalse(database.connect());
         } finally {
             database.close();
         }
+    }
+
+    @Test
+    void sha256GivesTheSameHexAsMysqlSha2() {
+        // SELECT SHA2('abc', 256) in MySQL gives this value.
+        assertEquals("ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad", Database.sha256("abc"));
     }
 
     @Test

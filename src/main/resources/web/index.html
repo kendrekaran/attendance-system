@@ -205,6 +205,50 @@
             padding: 10px 0 24px;
         }
 
+        .user-bar {
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        .btn-light {
+            background-color: white;
+            color: #1f4e9c;
+            margin-left: 6px;
+        }
+
+        .login-box {
+            max-width: 360px;
+            margin: 50px auto;
+            background-color: white;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            padding: 24px;
+        }
+
+        .login-box label {
+            display: block;
+            margin: 12px 0 6px;
+        }
+
+        .login-box input {
+            width: 100%;
+        }
+
+        .login-box .btn {
+            width: 100%;
+            margin-top: 18px;
+        }
+
+        .present {
+            color: #2e7d32;
+            font-weight: bold;
+        }
+
+        .absent {
+            color: #c62828;
+            font-weight: bold;
+        }
+
         @media (max-width: 600px) {
             .form-row input {
                 width: 100%;
@@ -219,9 +263,33 @@
 </head>
 <body>
 
+<!-- Login page. Shown until the teacher logs in. -->
+<div id="login-page" style="display: none;">
+    <header>
+        <h1>Student Attendance System</h1>
+        <p>Please log in to continue.</p>
+    </header>
+    <div class="login-box">
+        <h2>Teacher Login</h2>
+        <div id="login-message" class="message error" style="display: none;"></div>
+        <form onsubmit="login(event)">
+            <label for="username">Username</label>
+            <input id="username" autocomplete="username">
+            <label for="password">Password</label>
+            <input id="password" type="password" autocomplete="current-password">
+            <button type="submit" class="btn">Login</button>
+        </form>
+    </div>
+</div>
+
+<!-- The app. Shown after login. -->
+<div id="app-page" style="display: none;">
+
 <header>
     <h1>Student Attendance System</h1>
     <p>Add students, mark attendance, and see each student's attendance percentage.</p>
+    <p class="user-bar">Logged in as <b id="current-user"></b>
+        <button type="button" class="btn btn-small btn-light" onclick="logout()">Logout</button></p>
 </header>
 
 <nav>
@@ -328,16 +396,39 @@
                         <th>Absent Days</th>
                         <th>Attendance %</th>
                         <th>Remark</th>
+                        <th class="center">History</th>
                     </tr>
                     </thead>
                     <tbody id="report-table"></tbody>
                 </table>
             </div>
         </div>
+
+        <div class="box" id="history-box" style="display: none;">
+            <h2 id="history-title">Attendance History</h2>
+            <p id="history-summary"></p>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Day</th>
+                        <th>Status</th>
+                    </tr>
+                    </thead>
+                    <tbody id="history-table"></tbody>
+                </table>
+            </div>
+            <div class="buttons">
+                <button type="button" class="btn btn-grey" onclick="closeHistory()">Close</button>
+            </div>
+        </div>
     </div>
 </div>
 
 <footer>Made with Java, MySQL (JDBC) and Apache POI</footer>
+
+</div>
 
 <script>
     // Every POST must send this header. The server refuses POSTs without it.
@@ -354,7 +445,77 @@
 
     document.getElementById("attendance-date").value = today();
     document.getElementById("attendance-date").max = today();
-    loadStudents();
+    checkLogin();
+
+    // ---------- login and logout ----------
+
+    // Asks the server if we are already logged in (the session cookie is sent automatically).
+    async function checkLogin() {
+        try {
+            var response = await fetch("/api/me");
+            if (response.ok) {
+                var data = await response.json();
+                showApp(data.username);
+                return;
+            }
+        } catch (e) {
+            // The server is not running. The login page will say so when the user tries.
+        }
+        showLoginPage("");
+    }
+
+    async function login(event) {
+        event.preventDefault();
+        var box = document.getElementById("login-message");
+        box.style.display = "none";
+        try {
+            var response = await fetch("/api/login", {
+                method: "POST",
+                headers: POST_HEADERS,
+                body: new URLSearchParams({
+                    username: document.getElementById("username").value,
+                    password: document.getElementById("password").value
+                }).toString()
+            });
+            var data = await response.json();
+            if (!response.ok) {
+                box.textContent = data.error;
+                box.style.display = "block";
+                return;
+            }
+            document.getElementById("password").value = "";
+            showApp(data.username);
+        } catch (e) {
+            box.textContent = "Cannot reach the server. Is it running?";
+            box.style.display = "block";
+        }
+    }
+
+    async function logout() {
+        try {
+            await fetch("/api/logout", { method: "POST", headers: POST_HEADERS });
+        } catch (e) {
+            // Show the login page anyway.
+        }
+        showLoginPage("You have logged out.");
+    }
+
+    function showApp(username) {
+        document.getElementById("current-user").textContent = username;
+        document.getElementById("login-page").style.display = "none";
+        document.getElementById("app-page").style.display = "block";
+        showTab("students");
+    }
+
+    function showLoginPage(text) {
+        document.getElementById("app-page").style.display = "none";
+        document.getElementById("login-page").style.display = "block";
+        var box = document.getElementById("login-message");
+        box.textContent = text;
+        box.className = text === "You have logged out." ? "message success" : "message error";
+        box.style.display = text ? "block" : "none";
+        document.getElementById("username").focus();
+    }
 
     // ---------- tabs and messages ----------
 
@@ -366,6 +527,7 @@
             document.getElementById("tab-" + tabs[i]).className = visible ? "active" : "";
         }
         hideMessage();
+        closeHistory();
         if (name === "students") {
             loadStudents();
         } else if (name === "attendance") {
@@ -397,6 +559,10 @@
         try {
             var response = await fetch(url);
             var data = await response.json();
+            if (data.loggedIn === false) {
+                showLoginPage("Please log in again.");
+                return null;
+            }
             if (!response.ok) {
                 showMessage(data.error + " " + (data.detail || ""), "error");
                 return null;
@@ -417,6 +583,10 @@
                 body: new URLSearchParams(fields).toString()
             });
             var data = await response.json();
+            if (data.loggedIn === false) {
+                showLoginPage("Please log in again.");
+                return null;
+            }
             if (!response.ok) {
                 showMessage(data.error, "error");
                 return null;
@@ -632,12 +802,60 @@
                 + "<td>" + s.absent + "</td>"
                 + "<td>" + (s.percent === "—" ? "—" : s.percent + "%") + "</td>"
                 + "<td>" + remark + "</td>"
+                + '<td class="center"><button class="btn btn-small" onclick="viewHistory(' + s.id + ')">View</button></td>'
                 + "</tr>";
         }
         if (data.students.length === 0) {
-            html = '<tr><td colspan="7" class="center">No students in this division.</td></tr>';
+            html = '<tr><td colspan="8" class="center">No students in this division.</td></tr>';
         }
         document.getElementById("report-table").innerHTML = html;
+    }
+
+    // Shows every marked day for one student under the report.
+    async function viewHistory(id) {
+        try {
+            var response = await fetch("/api/history?id=" + id);
+            var data = await response.json();
+            if (data.loggedIn === false) {
+                showLoginPage("Please log in again.");
+                return;
+            }
+            if (!response.ok) {
+                showMessage(data.error, "error");
+                return;
+            }
+            var present = 0;
+            var html = "";
+            for (var i = 0; i < data.days.length; i++) {
+                var day = data.days[i];
+                var isPresent = day.status === "PRESENT";
+                if (isPresent) {
+                    present++;
+                }
+                var weekday = new Date(day.date + "T00:00:00").toLocaleDateString("en-GB", { weekday: "long" });
+                html += "<tr>"
+                    + "<td>" + escapeHtml(day.date) + "</td>"
+                    + "<td>" + weekday + "</td>"
+                    + '<td class="' + (isPresent ? "present" : "absent") + '">' + (isPresent ? "Present" : "Absent") + "</td>"
+                    + "</tr>";
+            }
+            if (data.days.length === 0) {
+                html = '<tr><td colspan="3" class="center">No attendance marked yet.</td></tr>';
+            }
+            document.getElementById("history-title").textContent =
+                "Attendance History: " + data.name + " (Roll " + data.roll + ", Division " + data.division + ")";
+            document.getElementById("history-summary").textContent = "Present on " + present + " of "
+                + data.days.length + " days. Attendance: " + (data.percent === "—" ? "—" : data.percent + "%");
+            document.getElementById("history-table").innerHTML = html;
+            document.getElementById("history-box").style.display = "block";
+            document.getElementById("history-box").scrollIntoView();
+        } catch (e) {
+            showMessage("Cannot reach the server. Is it running?", "error");
+        }
+    }
+
+    function closeHistory() {
+        document.getElementById("history-box").style.display = "none";
     }
 
     function exportExcel() {

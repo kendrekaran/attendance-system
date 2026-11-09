@@ -50,6 +50,7 @@ public class Main {
             System.out.println("MySQL is not reachable at " + database.location() + ": " + database.getLastError());
             System.out.println("The page will say so. Start MySQL, load schema.sql, then click Retry.");
         }
+        System.out.println("Log in with username admin and password admin123.");
         System.out.println("Press Ctrl+C to stop.");
     }
 

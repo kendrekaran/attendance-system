@@ -13,6 +13,22 @@ USE attendance_db;
 
 DROP TABLE IF EXISTS attendance;
 DROP TABLE IF EXISTS students;
+DROP TABLE IF EXISTS users;
+
+-- Teacher accounts for the login page.
+-- The password is never stored as plain text. password_hash is SHA-256 of (salt + password).
+CREATE TABLE users (
+    id INT NOT NULL AUTO_INCREMENT,
+    username VARCHAR(50) NOT NULL,
+    salt VARCHAR(32) NOT NULL,
+    password_hash CHAR(64) NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_users_username (username)
+) ENGINE=InnoDB;
+
+-- Default login: username admin, password admin123.
+INSERT INTO users (username, salt, password_hash) VALUES
+    ('admin', 'k7Qz2mXa9Lp4', SHA2(CONCAT('k7Qz2mXa9Lp4', 'admin123'), 256));
 
 CREATE TABLE students (
     id INT NOT NULL AUTO_INCREMENT,

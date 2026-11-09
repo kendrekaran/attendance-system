@@ -1,5 +1,8 @@
 package attendance;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.DriverManager;
@@ -8,6 +11,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Locale;
 
@@ -117,6 +121,51 @@ public class Database {
             statement.setString(3, safeTrim(division));
             statement.executeUpdate();
         }
+    }
+
+    /**
+     * Returns true when the username exists and the password is right.
+     * The users table keeps a salt and SHA-256(salt + password), so the password itself is never stored.
+     */
+    public boolean checkLogin(String username, String password) throws SQLException {
+        String sql = "SELECT salt, password_hash FROM users WHERE username = ?";
+        try (PreparedStatement statement = connection().prepareStatement(sql)) {
+            statement.setString(1, safeTrim(username));
+            try (ResultSet rows = statement.executeQuery()) {
+                if (!rows.next()) {
+                    return false;
+                }
+                String expected = rows.getString("password_hash");
+                String actual = sha256(rows.getString("salt") + (password == null ? "" : password));
+                return MessageDigest.isEqual(
+                        expected.getBytes(StandardCharsets.UTF_8), actual.getBytes(StandardCharsets.UTF_8));
+            }
+        }
+    }
+
+    /** SHA-256 of the text as 64 lowercase hex characters, the same as MySQL's SHA2(text, 256). */
+    public static String sha256(String text) {
+        try {
+            byte[] hash = MessageDigest.getInstance("SHA-256").digest(text.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(hash);
+        } catch (NoSuchAlgorithmException ex) {
+            throw new IllegalStateException("SHA-256 is missing from this Java install.", ex);
+        }
+    }
+
+    /** Every marked day for one student, oldest first. Each item is {date, status}. */
+    public List<String[]> studentHistory(int studentId) throws SQLException {
+        String sql = "SELECT attendance_date, status FROM attendance WHERE student_id = ? ORDER BY attendance_date";
+        List<String[]> days = new ArrayList<>();
+        try (PreparedStatement statement = connection().prepareStatement(sql)) {
+            statement.setInt(1, studentId);
+            try (ResultSet rows = statement.executeQuery()) {
+                while (rows.next()) {
+                    days.add(new String[] {rows.getString("attendance_date"), rows.getString("status")});
+                }
+            }
+        }
+        return days;
     }
 
     /** Changes a student's name, roll number, and division. Returns false if the id is not found. */
