@@ -11,252 +11,544 @@
 
         body {
             margin: 0;
-            font-family: Arial, Helvetica, sans-serif;
+            font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             font-size: 15px;
-            color: #222;
-            background-color: #f0f2f5;
+            line-height: 1.5;
+            color: #1f2937;
+            background-color: #f3f5f9;
         }
 
-        header {
-            background-color: #1f4e9c;
+        /* ---------- top bar ---------- */
+
+        .navbar {
+            background-color: #1e3a8a;
             color: white;
-            padding: 18px 20px;
-            text-align: center;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
         }
 
-        header h1 {
-            margin: 0;
-            font-size: 26px;
+        .nav-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            flex-wrap: wrap;
         }
 
-        header p {
-            margin: 6px 0 0;
-            font-size: 14px;
-            color: #dbe6ff;
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 18px;
+            font-weight: 700;
         }
 
-        nav {
-            background-color: white;
-            border-bottom: 1px solid #ccc;
-            text-align: center;
-            padding: 10px;
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            background-color: rgba(255, 255, 255, 0.15);
         }
 
-        nav button {
-            background-color: white;
-            border: 1px solid #1f4e9c;
-            color: #1f4e9c;
-            padding: 8px 18px;
-            margin: 4px;
+        .tabs {
+            display: flex;
+            gap: 6px;
+            flex: 1;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            background: none;
+            border: none;
+            color: #c7d2fe;
+            padding: 8px 14px;
             font-size: 15px;
-            border-radius: 4px;
+            font-weight: 600;
+            border-radius: 6px;
             cursor: pointer;
         }
 
-        nav button.active {
-            background-color: #1f4e9c;
+        .tab:hover {
             color: white;
+            background-color: rgba(255, 255, 255, 0.08);
         }
+
+        .tab.active {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.18);
+        }
+
+        .user {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+        }
+
+        .avatar {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: #fbbf24;
+            color: #1e3a8a;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        /* ---------- page layout ---------- */
 
         .container {
-            max-width: 950px;
-            margin: 20px auto;
-            padding: 0 12px;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 24px 20px 10px;
         }
 
-        .box {
+        .page-title {
+            margin-bottom: 18px;
+        }
+
+        .page-title h1 {
+            margin: 0;
+            font-size: 24px;
+            color: #111827;
+        }
+
+        .page-title p {
+            margin: 4px 0 0;
+            color: #6b7280;
+        }
+
+        .card {
             background-color: white;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            padding: 18px 20px;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+            padding: 20px;
             margin-bottom: 20px;
         }
 
-        h2 {
-            margin-top: 0;
-            font-size: 20px;
-            color: #1f4e9c;
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
         }
 
-        label {
-            font-weight: bold;
-            margin-right: 6px;
+        .card h2 {
+            margin: 0;
+            font-size: 18px;
+            color: #111827;
+        }
+
+        .count {
+            display: inline-block;
+            margin-left: 6px;
+            padding: 1px 9px;
+            border-radius: 999px;
+            background-color: #e0e7ff;
+            color: #3730a3;
+            font-size: 13px;
+            font-weight: 600;
+            vertical-align: middle;
+        }
+
+        /* ---------- forms ---------- */
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr auto;
+            gap: 14px;
+            align-items: end;
+        }
+
+        .field label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #374151;
         }
 
         input, select {
-            padding: 7px;
+            width: 100%;
+            padding: 9px 11px;
             font-size: 15px;
-            border: 1px solid #999;
-            border-radius: 4px;
+            font-family: inherit;
+            color: #111827;
+            background-color: white;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
         }
 
-        .form-row {
-            margin-bottom: 12px;
+        input:focus, select:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
         }
 
-        .form-row input {
-            width: 220px;
-            margin-right: 14px;
+        .filters {
+            display: flex;
+            align-items: end;
+            gap: 14px;
+            flex-wrap: wrap;
         }
+
+        .filters .field {
+            min-width: 170px;
+        }
+
+        /* ---------- buttons ---------- */
 
         .btn {
-            padding: 8px 16px;
+            display: inline-block;
+            padding: 9px 18px;
             font-size: 15px;
-            border: none;
-            border-radius: 4px;
+            font-weight: 600;
+            font-family: inherit;
+            border: 1px solid transparent;
+            border-radius: 6px;
             cursor: pointer;
             color: white;
-            background-color: #1f4e9c;
+            background-color: #2563eb;
+            white-space: nowrap;
         }
 
         .btn:hover {
-            opacity: 0.85;
+            background-color: #1d4ed8;
         }
 
         .btn-green {
-            background-color: #2e7d32;
+            background-color: #16a34a;
         }
 
-        .btn-red {
-            background-color: #c62828;
+        .btn-green:hover {
+            background-color: #15803d;
         }
 
         .btn-grey {
-            background-color: #757575;
+            background-color: white;
+            color: #374151;
+            border-color: #d1d5db;
+        }
+
+        .btn-grey:hover {
+            background-color: #f3f4f6;
         }
 
         .btn-small {
-            padding: 5px 10px;
+            padding: 5px 12px;
             font-size: 13px;
+        }
+
+        .btn-outline {
+            background-color: white;
+            color: #2563eb;
+            border-color: #bfdbfe;
+        }
+
+        .btn-outline:hover {
+            background-color: #eff6ff;
+        }
+
+        .btn-outline-red {
+            background-color: white;
+            color: #dc2626;
+            border-color: #fecaca;
+        }
+
+        .btn-outline-red:hover {
+            background-color: #fef2f2;
+        }
+
+        .btn-light {
+            background-color: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.35);
+        }
+
+        .btn-light:hover {
+            background-color: rgba(255, 255, 255, 0.25);
+        }
+
+        .actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        /* ---------- tables ---------- */
+
+        .table-wrap {
+            overflow-x: auto;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 12px;
         }
 
         th, td {
-            border: 1px solid #ccc;
-            padding: 8px 10px;
+            padding: 11px 14px;
             text-align: left;
+            border-bottom: 1px solid #eef0f4;
         }
 
         th {
-            background-color: #e3eaf7;
+            background-color: #f9fafb;
+            color: #4b5563;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
         }
 
-        tr:nth-child(even) td {
-            background-color: #fafafa;
+        tbody tr:last-child td {
+            border-bottom: none;
         }
 
-        .low td {
-            color: #c62828;
-            font-weight: bold;
+        tbody tr:hover td {
+            background-color: #f8faff;
         }
 
         .center {
             text-align: center;
         }
 
+        .right {
+            text-align: right;
+        }
+
+        .roll {
+            color: #6b7280;
+            font-weight: 600;
+        }
+
+        .name {
+            font-weight: 600;
+        }
+
+        .empty {
+            padding: 28px;
+            text-align: center;
+            color: #6b7280;
+        }
+
+        /* ---------- badges ---------- */
+
+        .badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .badge-ok, .badge-present {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+
+        .badge-low, .badge-absent {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-none {
+            background-color: #f3f4f6;
+            color: #6b7280;
+        }
+
+        .division-badge {
+            display: inline-block;
+            min-width: 28px;
+            padding: 1px 8px;
+            border-radius: 6px;
+            background-color: #eef2ff;
+            color: #3730a3;
+            font-size: 13px;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .percent-low {
+            color: #dc2626;
+            font-weight: 700;
+        }
+
+        .percent-ok {
+            font-weight: 700;
+        }
+
+        /* ---------- Present / Absent choice ---------- */
+
+        .choice {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+        }
+
+        .choice input {
+            position: absolute;
+            opacity: 0;
+            width: 1px;
+            height: 1px;
+        }
+
+        .choice span {
+            display: inline-block;
+            padding: 5px 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #4b5563;
+            background-color: white;
+        }
+
+        .choice:hover span {
+            border-color: #9ca3af;
+        }
+
+        .choice input:focus-visible + span {
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3);
+        }
+
+        .choice.present input:checked + span {
+            background-color: #16a34a;
+            border-color: #16a34a;
+            color: white;
+        }
+
+        .choice.absent input:checked + span {
+            background-color: #dc2626;
+            border-color: #dc2626;
+            color: white;
+        }
+
+        .totals {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 16px 0 12px;
+        }
+
+        /* ---------- messages ---------- */
+
         .message {
-            padding: 10px 14px;
-            border-radius: 4px;
-            margin-bottom: 16px;
+            padding: 11px 15px;
+            border-radius: 8px;
+            margin-bottom: 18px;
+            font-weight: 500;
         }
 
         .success {
-            background-color: #e6f4ea;
-            border: 1px solid #81c784;
-            color: #1b5e20;
+            background-color: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            color: #065f46;
         }
 
         .error {
-            background-color: #fdecea;
-            border: 1px solid #e57373;
-            color: #b71c1c;
+            background-color: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
         }
 
         .note {
-            color: #666;
+            margin: 10px 0 0;
+            color: #6b7280;
             font-size: 13px;
         }
 
-        .buttons {
-            margin-top: 14px;
-        }
+        /* ---------- login ---------- */
 
-        .buttons .btn {
-            margin-right: 8px;
-        }
-
-        .filters {
-            margin-bottom: 6px;
-        }
-
-        .filters select, .filters input {
-            margin-right: 14px;
-        }
-
-        footer {
-            text-align: center;
-            color: #777;
-            font-size: 13px;
-            padding: 10px 0 24px;
-        }
-
-        .user-bar {
-            margin-top: 10px;
-            font-size: 14px;
-        }
-
-        .btn-light {
-            background-color: white;
-            color: #1f4e9c;
-            margin-left: 6px;
+        .login-wrap {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background-color: #1e3a8a;
         }
 
         .login-box {
-            max-width: 360px;
-            margin: 50px auto;
-            background-color: white;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            padding: 24px;
-        }
-
-        .login-box label {
-            display: block;
-            margin: 12px 0 6px;
-        }
-
-        .login-box input {
             width: 100%;
+            max-width: 380px;
+            background-color: white;
+            border-radius: 12px;
+            padding: 32px 28px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+        }
+
+        .login-box .logo {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background-color: #1e3a8a;
+            color: white;
+            margin: 0 auto 14px;
+            display: flex;
+        }
+
+        .login-box h1 {
+            margin: 0;
+            text-align: center;
+            font-size: 22px;
+        }
+
+        .login-box .subtitle {
+            margin: 4px 0 22px;
+            text-align: center;
+            color: #6b7280;
+        }
+
+        .login-box .field {
+            margin-bottom: 14px;
         }
 
         .login-box .btn {
             width: 100%;
-            margin-top: 18px;
+            margin-top: 6px;
+            padding: 11px;
         }
 
-        .present {
-            color: #2e7d32;
-            font-weight: bold;
+        footer {
+            text-align: center;
+            color: #9ca3af;
+            font-size: 13px;
+            padding: 6px 0 24px;
         }
 
-        .absent {
-            color: #c62828;
-            font-weight: bold;
-        }
-
-        @media (max-width: 600px) {
-            .form-row input {
-                width: 100%;
-                margin: 4px 0 10px;
+        @media (max-width: 700px) {
+            .form-grid {
+                grid-template-columns: 1fr 1fr;
             }
 
-            .table-wrap {
-                overflow-x: auto;
+            .form-grid .field:first-child {
+                grid-column: 1 / 3;
+            }
+
+            .nav-inner {
+                gap: 10px;
+            }
+
+            .tabs {
+                order: 3;
+                flex-basis: 100%;
+            }
+
+            .user {
+                margin-left: auto;
             }
         }
     </style>
@@ -265,65 +557,98 @@
 
 <!-- Login page. Shown until the teacher logs in. -->
 <div id="login-page" style="display: none;">
-    <header>
-        <h1>Student Attendance System</h1>
-        <p>Please log in to continue.</p>
-    </header>
-    <div class="login-box">
-        <h2>Teacher Login</h2>
-        <div id="login-message" class="message error" style="display: none;"></div>
-        <form onsubmit="login(event)">
-            <label for="username">Username</label>
-            <input id="username" autocomplete="username">
-            <label for="password">Password</label>
-            <input id="password" type="password" autocomplete="current-password">
-            <button type="submit" class="btn">Login</button>
-        </form>
+    <div class="login-wrap">
+        <div class="login-box">
+            <span class="logo">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="m9 13 2 2 4-4"/></svg>
+            </span>
+            <h1>Student Attendance System</h1>
+            <p class="subtitle">Teacher Login</p>
+            <div id="login-message" class="message error" style="display: none;"></div>
+            <form onsubmit="login(event)">
+                <div class="field">
+                    <label for="username">Username</label>
+                    <input id="username" autocomplete="username" placeholder="Enter username">
+                </div>
+                <div class="field">
+                    <label for="password">Password</label>
+                    <input id="password" type="password" autocomplete="current-password" placeholder="Enter password">
+                </div>
+                <button type="submit" class="btn">Login</button>
+            </form>
+        </div>
     </div>
 </div>
 
 <!-- The app. Shown after login. -->
 <div id="app-page" style="display: none;">
 
-<header>
-    <h1>Student Attendance System</h1>
-    <p>Add students, mark attendance, and see each student's attendance percentage.</p>
-    <p class="user-bar">Logged in as <b id="current-user"></b>
-        <button type="button" class="btn btn-small btn-light" onclick="logout()">Logout</button></p>
-</header>
-
-<nav>
-    <button id="tab-students" class="active" onclick="showTab('students')">Students</button>
-    <button id="tab-attendance" onclick="showTab('attendance')">Mark Attendance</button>
-    <button id="tab-report" onclick="showTab('report')">Attendance Report</button>
-</nav>
+<div class="navbar">
+    <div class="nav-inner">
+        <div class="brand">
+            <span class="logo">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="m9 13 2 2 4-4"/></svg>
+            </span>
+            Student Attendance System
+        </div>
+        <div class="tabs">
+            <button id="tab-students" class="tab active" onclick="showTab('students')">Students</button>
+            <button id="tab-attendance" class="tab" onclick="showTab('attendance')">Mark Attendance</button>
+            <button id="tab-report" class="tab" onclick="showTab('report')">Attendance Report</button>
+        </div>
+        <div class="user">
+            <span class="avatar" id="avatar">A</span>
+            <span id="current-user"></span>
+            <button type="button" class="btn btn-small btn-light" onclick="logout()">Logout</button>
+        </div>
+    </div>
+</div>
 
 <div class="container">
     <div id="message" class="message" style="display: none;"></div>
 
     <!-- Students tab -->
     <div id="students-section">
-        <div class="box">
-            <h2 id="form-title">Add Student</h2>
+        <div class="page-title">
+            <h1>Students</h1>
+            <p>Add new students, or edit and remove existing ones.</p>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2 id="form-title">Add Student</h2>
+            </div>
             <form id="student-form" onsubmit="saveStudent(event)">
-                <div class="form-row">
-                    <label for="name">Name</label>
-                    <input id="name" placeholder="Full name" autocomplete="off">
-                    <label for="roll">Roll No</label>
-                    <input id="roll" placeholder="e.g. 107" autocomplete="off" style="width: 110px;">
-                    <label for="division">Division</label>
-                    <input id="division" placeholder="A" autocomplete="off" style="width: 70px;">
+                <div class="form-grid">
+                    <div class="field">
+                        <label for="name">Full name</label>
+                        <input id="name" placeholder="e.g. Meera Iyer" autocomplete="off">
+                    </div>
+                    <div class="field">
+                        <label for="roll">Roll No</label>
+                        <input id="roll" placeholder="e.g. 107" autocomplete="off">
+                    </div>
+                    <div class="field">
+                        <label for="division">Division</label>
+                        <input id="division" placeholder="e.g. A" autocomplete="off">
+                    </div>
+                    <div>
+                        <button type="submit" id="save-button" class="btn">Add Student</button>
+                        <button type="button" id="cancel-button" class="btn btn-grey" onclick="cancelEdit()" style="display: none;">Cancel</button>
+                    </div>
                 </div>
-                <button type="submit" id="save-button" class="btn">Add Student</button>
-                <button type="button" id="cancel-button" class="btn btn-grey" onclick="cancelEdit()" style="display: none;">Cancel</button>
             </form>
         </div>
 
-        <div class="box">
-            <h2>All Students (<span id="student-count">0</span>)</h2>
-            <div class="filters">
-                <label for="students-division">Division</label>
-                <select id="students-division" onchange="loadStudents()"></select>
+        <div class="card">
+            <div class="card-header">
+                <h2>All Students <span class="count" id="student-count">0</span></h2>
+                <div class="filters">
+                    <div class="field">
+                        <label for="students-division">Division</label>
+                        <select id="students-division" onchange="loadStudents()"></select>
+                    </div>
+                </div>
             </div>
             <div class="table-wrap">
                 <table>
@@ -332,7 +657,7 @@
                         <th>Roll No</th>
                         <th>Name</th>
                         <th>Division</th>
-                        <th class="center">Actions</th>
+                        <th class="right">Actions</th>
                     </tr>
                     </thead>
                     <tbody id="students-table"></tbody>
@@ -343,16 +668,66 @@
 
     <!-- Mark Attendance tab -->
     <div id="attendance-section" style="display: none;">
-        <div class="box">
-            <h2>Mark Attendance</h2>
+        <div class="page-title">
+            <h1>Mark Attendance</h1>
+            <p>Choose Present or Absent for each student, then click Save Attendance. Saving a date again changes its marks.</p>
+        </div>
+
+        <div class="card">
             <div class="filters">
-                <label for="attendance-date">Date</label>
-                <input type="date" id="attendance-date" onchange="loadAttendance()">
-                <label for="attendance-division">Division</label>
-                <select id="attendance-division" onchange="loadAttendance()"></select>
+                <div class="field">
+                    <label for="attendance-date">Date</label>
+                    <input type="date" id="attendance-date" onchange="loadAttendance()">
+                </div>
+                <div class="field">
+                    <label for="attendance-division">Division</label>
+                    <select id="attendance-division" onchange="loadAttendance()"></select>
+                </div>
             </div>
-            <p class="note">Choose Present or Absent for each student, then click Save Attendance.
-                If a day is already marked, saving again changes it.</p>
+
+            <div class="totals">
+                <span class="badge badge-present">Present: <span id="total-present">0</span></span>
+                <span class="badge badge-absent">Absent: <span id="total-absent">0</span></span>
+                <span class="badge badge-none">Not marked: <span id="total-none">0</span></span>
+            </div>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Roll No</th>
+                        <th>Name</th>
+                        <th>Division</th>
+                        <th class="center">Status</th>
+                    </tr>
+                    </thead>
+                    <tbody id="attendance-table" onchange="updateTotals()"></tbody>
+                </table>
+            </div>
+            <div class="actions">
+                <button type="button" class="btn btn-grey" onclick="markAllPresent()">Mark All Present</button>
+                <button type="button" class="btn btn-green" onclick="saveAttendance()">Save Attendance</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attendance Report tab -->
+    <div id="report-section" style="display: none;">
+        <div class="page-title">
+            <h1>Attendance Report</h1>
+            <p>Attendance % = present days / marked days &times; 100. Students below 75% get a red badge.</p>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="filters">
+                    <div class="field">
+                        <label for="report-division">Division</label>
+                        <select id="report-division" onchange="loadReport()"></select>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-green" onclick="exportExcel()">Export to Excel</button>
+            </div>
             <div class="table-wrap">
                 <table>
                     <thead>
@@ -362,41 +737,9 @@
                         <th>Division</th>
                         <th class="center">Present</th>
                         <th class="center">Absent</th>
-                    </tr>
-                    </thead>
-                    <tbody id="attendance-table"></tbody>
-                </table>
-            </div>
-            <div class="buttons">
-                <button type="button" class="btn btn-grey" onclick="markAllPresent()">Mark All Present</button>
-                <button type="button" class="btn btn-green" onclick="saveAttendance()">Save Attendance</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Attendance Report tab -->
-    <div id="report-section" style="display: none;">
-        <div class="box">
-            <h2>Attendance Report</h2>
-            <div class="filters">
-                <label for="report-division">Division</label>
-                <select id="report-division" onchange="loadReport()"></select>
-                <button type="button" class="btn btn-green" onclick="exportExcel()">Export to Excel</button>
-            </div>
-            <p class="note">Attendance % = present days / marked days &times; 100.
-                Students below 75% are shown in red.</p>
-            <div class="table-wrap">
-                <table>
-                    <thead>
-                    <tr>
-                        <th>Roll No</th>
-                        <th>Name</th>
-                        <th>Division</th>
-                        <th>Present Days</th>
-                        <th>Absent Days</th>
-                        <th>Attendance %</th>
-                        <th>Remark</th>
-                        <th class="center">History</th>
+                        <th class="center">Attendance %</th>
+                        <th class="center">Remark</th>
+                        <th class="right">History</th>
                     </tr>
                     </thead>
                     <tbody id="report-table"></tbody>
@@ -404,9 +747,12 @@
             </div>
         </div>
 
-        <div class="box" id="history-box" style="display: none;">
-            <h2 id="history-title">Attendance History</h2>
-            <p id="history-summary"></p>
+        <div class="card" id="history-box" style="display: none;">
+            <div class="card-header">
+                <h2 id="history-title">Attendance History</h2>
+                <button type="button" class="btn btn-small btn-grey" onclick="closeHistory()">Close</button>
+            </div>
+            <p id="history-summary" class="note" style="margin: -6px 0 14px;"></p>
             <div class="table-wrap">
                 <table>
                     <thead>
@@ -419,14 +765,11 @@
                     <tbody id="history-table"></tbody>
                 </table>
             </div>
-            <div class="buttons">
-                <button type="button" class="btn btn-grey" onclick="closeHistory()">Close</button>
-            </div>
         </div>
     </div>
 </div>
 
-<footer>Made with Java, MySQL (JDBC) and Apache POI</footer>
+<footer>Student Attendance System &middot; Java, MySQL (JDBC) and Apache POI</footer>
 
 </div>
 
@@ -480,6 +823,7 @@
             var data = await response.json();
             if (!response.ok) {
                 box.textContent = data.error;
+                box.className = "message error";
                 box.style.display = "block";
                 return;
             }
@@ -487,6 +831,7 @@
             showApp(data.username);
         } catch (e) {
             box.textContent = "Cannot reach the server. Is it running?";
+            box.className = "message error";
             box.style.display = "block";
         }
     }
@@ -502,6 +847,7 @@
 
     function showApp(username) {
         document.getElementById("current-user").textContent = username;
+        document.getElementById("avatar").textContent = username.charAt(0);
         document.getElementById("login-page").style.display = "none";
         document.getElementById("app-page").style.display = "block";
         showTab("students");
@@ -524,7 +870,7 @@
         for (var i = 0; i < tabs.length; i++) {
             var visible = tabs[i] === name;
             document.getElementById(tabs[i] + "-section").style.display = visible ? "block" : "none";
-            document.getElementById("tab-" + tabs[i]).className = visible ? "active" : "";
+            document.getElementById("tab-" + tabs[i]).className = visible ? "tab active" : "tab";
         }
         hideMessage();
         closeHistory();
@@ -602,9 +948,9 @@
     function fillDivisions(selectId, divisions) {
         var select = document.getElementById(selectId);
         var current = select.value || "All";
-        var html = '<option value="All">All</option>';
+        var html = '<option value="All">All divisions</option>';
         for (var i = 0; i < divisions.length; i++) {
-            html += '<option value="' + escapeHtml(divisions[i].name) + '">' + escapeHtml(divisions[i].name) + '</option>';
+            html += '<option value="' + escapeHtml(divisions[i].name) + '">Division ' + escapeHtml(divisions[i].name) + '</option>';
         }
         select.innerHTML = html;
         select.value = current;
@@ -628,17 +974,17 @@
         for (var i = 0; i < data.students.length; i++) {
             var s = data.students[i];
             html += "<tr>"
-                + "<td>" + escapeHtml(s.roll) + "</td>"
-                + "<td>" + escapeHtml(s.name) + "</td>"
-                + "<td>" + escapeHtml(s.division) + "</td>"
-                + '<td class="center">'
-                + '<button class="btn btn-small" onclick="editStudent(' + s.id + ')">Edit</button> '
-                + '<button class="btn btn-small btn-red" onclick="deleteStudent(' + s.id + ')">Delete</button>'
+                + '<td class="roll">' + escapeHtml(s.roll) + "</td>"
+                + '<td class="name">' + escapeHtml(s.name) + "</td>"
+                + '<td><span class="division-badge">' + escapeHtml(s.division) + "</span></td>"
+                + '<td class="right">'
+                + '<button class="btn btn-small btn-outline" onclick="editStudent(' + s.id + ')">Edit</button> '
+                + '<button class="btn btn-small btn-outline-red" onclick="deleteStudent(' + s.id + ')">Delete</button>'
                 + "</td>"
                 + "</tr>";
         }
         if (data.students.length === 0) {
-            html = '<tr><td colspan="4" class="center">No students yet. Add one above.</td></tr>';
+            html = '<tr><td colspan="4" class="empty">No students yet. Add one above.</td></tr>';
         }
         document.getElementById("students-table").innerHTML = html;
         studentsOnPage = data.students;
@@ -735,17 +1081,37 @@
             var presentChecked = s.dayStatus === "PRESENT" ? " checked" : "";
             var absentChecked = s.dayStatus === "ABSENT" ? " checked" : "";
             html += "<tr>"
-                + "<td>" + escapeHtml(s.roll) + "</td>"
-                + "<td>" + escapeHtml(s.name) + "</td>"
-                + "<td>" + escapeHtml(s.division) + "</td>"
-                + '<td class="center"><input type="radio" name="status-' + s.id + '" value="PRESENT"' + presentChecked + ' aria-label="' + escapeHtml(s.name) + ' present"></td>'
-                + '<td class="center"><input type="radio" name="status-' + s.id + '" value="ABSENT"' + absentChecked + ' aria-label="' + escapeHtml(s.name) + ' absent"></td>'
+                + '<td class="roll">' + escapeHtml(s.roll) + "</td>"
+                + '<td class="name">' + escapeHtml(s.name) + "</td>"
+                + '<td><span class="division-badge">' + escapeHtml(s.division) + "</span></td>"
+                + '<td class="center">'
+                + '<label class="choice present"><input type="radio" name="status-' + s.id + '" value="PRESENT"' + presentChecked + '><span>Present</span></label> '
+                + '<label class="choice absent"><input type="radio" name="status-' + s.id + '" value="ABSENT"' + absentChecked + '><span>Absent</span></label>'
+                + "</td>"
                 + "</tr>";
         }
         if (studentList.length === 0) {
-            html = '<tr><td colspan="5" class="center">No students in this division.</td></tr>';
+            html = '<tr><td colspan="4" class="empty">No students in this division.</td></tr>';
         }
         document.getElementById("attendance-table").innerHTML = html;
+        updateTotals();
+    }
+
+    // Counts how many students are marked Present, Absent, or not marked yet.
+    function updateTotals() {
+        var present = 0;
+        var absent = 0;
+        for (var i = 0; i < studentList.length; i++) {
+            var checked = document.querySelector('input[name="status-' + studentList[i].id + '"]:checked');
+            if (checked && checked.value === "PRESENT") {
+                present++;
+            } else if (checked) {
+                absent++;
+            }
+        }
+        document.getElementById("total-present").textContent = present;
+        document.getElementById("total-absent").textContent = absent;
+        document.getElementById("total-none").textContent = studentList.length - present - absent;
     }
 
     function markAllPresent() {
@@ -755,6 +1121,7 @@
                 radio.checked = true;
             }
         }
+        updateTotals();
     }
 
     async function saveAttendance() {
@@ -792,21 +1159,27 @@
         var html = "";
         for (var i = 0; i < data.students.length; i++) {
             var s = data.students[i];
-            var low = s.percent !== "—" && parseFloat(s.percent) < 75;
-            var remark = s.percent === "—" ? "Not marked yet" : (low ? "Below 75%" : "OK");
-            html += '<tr' + (low ? ' class="low"' : '') + '>'
-                + "<td>" + escapeHtml(s.roll) + "</td>"
-                + "<td>" + escapeHtml(s.name) + "</td>"
-                + "<td>" + escapeHtml(s.division) + "</td>"
-                + "<td>" + s.present + "</td>"
-                + "<td>" + s.absent + "</td>"
-                + "<td>" + (s.percent === "—" ? "—" : s.percent + "%") + "</td>"
-                + "<td>" + remark + "</td>"
-                + '<td class="center"><button class="btn btn-small" onclick="viewHistory(' + s.id + ')">View</button></td>'
+            var notMarked = s.percent === "—";
+            var low = !notMarked && parseFloat(s.percent) < 75;
+            var remark = '<span class="badge badge-ok">OK</span>';
+            if (notMarked) {
+                remark = '<span class="badge badge-none">Not marked yet</span>';
+            } else if (low) {
+                remark = '<span class="badge badge-low">Below 75%</span>';
+            }
+            html += "<tr>"
+                + '<td class="roll">' + escapeHtml(s.roll) + "</td>"
+                + '<td class="name">' + escapeHtml(s.name) + "</td>"
+                + '<td><span class="division-badge">' + escapeHtml(s.division) + "</span></td>"
+                + '<td class="center">' + s.present + "</td>"
+                + '<td class="center">' + s.absent + "</td>"
+                + '<td class="center ' + (low ? "percent-low" : "percent-ok") + '">' + (notMarked ? "—" : s.percent + "%") + "</td>"
+                + '<td class="center">' + remark + "</td>"
+                + '<td class="right"><button class="btn btn-small btn-outline" onclick="viewHistory(' + s.id + ')">View</button></td>'
                 + "</tr>";
         }
         if (data.students.length === 0) {
-            html = '<tr><td colspan="8" class="center">No students in this division.</td></tr>';
+            html = '<tr><td colspan="8" class="empty">No students in this division.</td></tr>';
         }
         document.getElementById("report-table").innerHTML = html;
     }
@@ -836,19 +1209,19 @@
                 html += "<tr>"
                     + "<td>" + escapeHtml(day.date) + "</td>"
                     + "<td>" + weekday + "</td>"
-                    + '<td class="' + (isPresent ? "present" : "absent") + '">' + (isPresent ? "Present" : "Absent") + "</td>"
+                    + "<td>" + (isPresent ? '<span class="badge badge-present">Present</span>' : '<span class="badge badge-absent">Absent</span>') + "</td>"
                     + "</tr>";
             }
             if (data.days.length === 0) {
-                html = '<tr><td colspan="3" class="center">No attendance marked yet.</td></tr>';
+                html = '<tr><td colspan="3" class="empty">No attendance marked yet.</td></tr>';
             }
             document.getElementById("history-title").textContent =
-                "Attendance History: " + data.name + " (Roll " + data.roll + ", Division " + data.division + ")";
+                data.name + " (Roll " + data.roll + ", Division " + data.division + ")";
             document.getElementById("history-summary").textContent = "Present on " + present + " of "
                 + data.days.length + " days. Attendance: " + (data.percent === "—" ? "—" : data.percent + "%");
             document.getElementById("history-table").innerHTML = html;
             document.getElementById("history-box").style.display = "block";
-            document.getElementById("history-box").scrollIntoView();
+            document.getElementById("history-box").scrollIntoView({ behavior: "smooth" });
         } catch (e) {
             showMessage("Cannot reach the server. Is it running?", "error");
         }
